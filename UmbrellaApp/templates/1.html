@@ -1,0 +1,517 @@
+{% extends 'block/main.html' %}
+{% block content %}
+    <style>
+        #head_card {
+            background-color: #00aefd;
+        }
+    </style>
+    <div id="body">
+        <div class="container">
+            <div class="row">
+                <div class="col">
+                    <div class="col-md">
+                        <div class="card text-center mb-3" id="head_card" href="#user" role="button"
+                             aria-expanded="true" data-bs-toggle="collapse">
+                            <div class="card-header">
+                                <h5 class="card-title">总注册人数</h5>
+                            </div>
+                            <div>
+                                <h3 class="card-title">{{ num_user }}</h3>
+                            </div>
+                        </div>
+                    </DIV>
+                </div>
+
+                <div class="col">
+                    <div class="col-md">
+                        <div class="card text-center mb-3" id="head_card" href="#umbrella" role="button"
+                             aria-expanded="true" data-bs-toggle="collapse">
+                            <div class="card-header">
+                                <h5 class="card-title">投入伞量</h5>
+                            </div>
+                            <div>
+                                <h3 class="card-title">{{ num_umbrella }}</h3>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="col-md">
+                        <div class="card text-center mb-3" id="head_card" href="#log" role="button"
+                             aria-expanded="true" data-bs-toggle="collapse">
+                            <div class="card-header">
+                                <h5 class="card-title">总收益</h5>
+                            </div>
+                            <div>
+                                <h3 class="card-title">￥{{ income }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="col-md">
+                        <div class="card text-center mb-3" id="head_card" href="#place" role="button"
+                             aria-expanded="true" data-bs-toggle="collapse">
+                            <div class="card-header">
+                                <h5 class="card-title">总区域数</h5>
+                            </div>
+                            <div>
+                                <h3 class="card-title">{{ loc_num }}</h3>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <form method="POST" action="">
+                <div class="collapse" id="user">
+                    <div class="card card-body">
+                        <div class="col-md">
+                            <h1><i class="bi bi-person-circle"></i> 用户列表</h1>
+                            <hr>
+                            <div class="card card-body">
+                                <div class="row">
+                                    <div class="col">
+                                        <a>对选中用户操作：</a>
+                                        <input type="submit" name="option" value="查看信息" class="btn btn-primary">
+                                        <input type="submit" name="option" value="删除用户" class="btn btn-warning">
+                                    </div>
+                                    {% if msg %}
+                                        <a>点此查看详情<a class="btn btn-primary" data-bs-toggle="modal"
+                                                          data-bs-target="#user_detail">查看</a></a>
+                                    {% endif %}
+                                </div>
+                                <br>
+                                <a class="btn btn-primary btn-sm btn-block" href="/register/">创建用户</a>
+                                <table class="table table-sm">
+                                    <hr>
+                                    <tr>
+                                        <th></th>
+                                        <th>姓名</th>
+                                        <th>学号</th>
+                                        <th>手机号</th>
+                                        <th>账户余额</th>
+                                        <th>伞号</th>
+                                    </tr>
+                                    {% csrf_token %}
+                                    {% for item in UserInfo_list %}
+                                        <tr>
+                                            <td>
+                                                <input class="form-check-input" type="checkbox" name="user"
+                                                       value="{{ item.id }}">
+                                            </td>
+                                            <td>{{ item.name }}</td>
+                                            <td>{{ item.userid }}</td>
+                                            <td>{{ item.phone }}</td>
+                                            <td>￥{{ item.balance }}</td>
+                                            {% if item.umbrella %}
+                                                <td>{{ item.umbrella }}</td>
+                                            {% else %}
+                                                <td>未借</td>
+                                            {% endif %}
+
+                                        </tr>
+                                    {% endfor %}
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+
+            <br>
+
+            <div class="collapse" id="umbrella">
+                <div class="card card-body">
+                    <div class="col-md">
+                        <h1><i class="bi bi-umbrella"></i> 伞列表</h1>
+                        <hr>
+                        <div class="card card-body">
+                            <a class="btn btn-primary btn-sm btn-block" data-bs-toggle="modal"
+                               data-bs-target="#import_umbrella">入库伞</a>
+
+                            <table class="table table-sm">
+                                <tr>
+                                    <th>编号</th>
+                                    <th>可用性</th>
+                                    <th>类型</th>
+                                    <th>入库日期</th>
+                                    <th>上次使用</th>
+                                    <th>放置位置</th>
+                                    <th>操作</th>
+                                </tr>
+                                {% for item in Umbrella_list %}
+                                    <tr>
+                                        <td>{{ item.id }}</td>
+                                        {% if item.can_use %}
+                                            <td>可用</td>
+                                        {% else %}
+                                            <td>不可用</td>
+                                        {% endif %}
+                                        <td>{{ item.type }}</td>
+                                        <td>{{ item.import_time|date:"Y-m-d" }}</td>
+                                        <td>{{ item.last_use|date:"Y-m-d" }}</td>
+                                        <td>{{ item.place }}</td>
+                                        <td>
+                                            <a class="btn btn-primary btn-sm" data-bs-toggle="modal"
+                                               data-bs-target="#umbrella_detail{{ item.id }}">详情</a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <br>
+
+            <div class="collapse" id="log">
+                <div class="card card-body">
+                    <div class="col-md">
+                        <h1><i class="bi bi-list-task"></i> 使用日志</h1>
+                        <hr>
+                        <div class="card card-body">
+                            <a class="btn btn-primary btn-sm btn-block" href="">刷新日志</a>
+
+                            <table class="table table-sm">
+                                <tr>
+                                    <th>编号</th>
+                                    <th>伞-类型</th>
+                                    <th>借伞时间</th>
+                                    <th>借伞地点</th>
+                                    <th>还伞时间</th>
+                                    <th>还伞地点</th>
+                                    <th>消费金额</th>
+                                </tr>
+                                {% for log in log_list %}
+                                    <tr>
+                                        <td>{{ log.id }}</td>
+                                        <td>{{ log.umbrella }}</td>
+                                        <td>{{ log.borrow_time|date:"Y-m-d H:i:s" }}</td>
+                                        <td>{{ log.borrow_place }}</td>
+                                        <td>{{ log.back_time|date:"Y-m-d H:i:s" }}</td>
+                                        <td>{{ log.back_place }}</td>
+                                        <td>{{ log.price }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="collapse" id="place">
+                <div class="card card-body">
+                    <div class="col-md">
+                        <h1><i class="bi bi-grid-3x3-gap"></i> 区域表</h1>
+                        <hr>
+                        <div class="card card-body">
+                            <a class="btn btn-primary btn-sm btn-block" data-bs-toggle="modal"
+                               data-bs-target="#place_umbrella">放置伞</a>
+                            <table class="table table-sm">
+                                <tr>
+                                    <th>编号</th>
+                                    <th>区域名</th>
+                                    <th>可用/总伞位</th>
+                                    <th>操作</th>
+                                </tr>
+                                {% for item in location_list %}
+                                    <tr>
+                                        <td>{{ item.id }}</td>
+                                        <td>{{ item.name }}</td>
+                                        <td>{{ item.num }}/{{ item.num_sum }}</td>
+                                        <td>
+                                            <a class="btn btn-primary btn-sm btn-block" data-bs-toggle="modal"
+                                               data-bs-target="#place{{ item.id }}">详情</a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </table>
+                            {% for message in messages %}
+                                <div class="col-md">
+                                    <div class="alert alert-danger" role="alert">
+                                        {{ message }}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <br>
+
+        {#            <div class="row">#}
+
+        {##}
+
+        {#            </div>#}
+        {#            <br>#}
+        {#            <div class="row">#}
+
+        {##}
+        {##}
+        {#        <div class="col-md-7">#}
+        {#            <h1><i class="bi bi-list-task"></i> 使用日志</h1>#}
+        {#            <hr>#}
+        {#            <div class="card card-body">#}
+        {#                <a class="btn btn-primary btn-sm btn-block" href="">刷新日志</a>#}
+        {##}
+        {#                <table class="table table-sm">#}
+        {#                    <tr>#}
+        {#                        <th>编号</th>#}
+        {#                        <th>伞-类型</th>#}
+        {#                        <th>借伞时间</th>#}
+        {#                        <th>借伞地点</th>#}
+        {#                        <th>还伞时间</th>#}
+        {#                        <th>还伞地点</th>#}
+        {#                        <th>消费金额</th>#}
+        {#                    </tr>#}
+        {#                    {% for log in log_list %}#}
+        {#                        <tr>#}
+        {#                            <td>{{ log.id }}</td>#}
+        {#                            <td>{{ log.umbrella }}</td>#}
+        {#                            <td>{{ log.borrow_time|date:"Y-m-d H:i:s" }}</td>#}
+        {#                            <td>{{ log.borrow_place }}</td>#}
+        {#                            <td>{{ log.back_time|date:"Y-m-d H:i:s" }}</td>#}
+        {#                            <td>{{ log.back_place }}</td>#}
+        {#                            <td>{{ log.price }}</td>#}
+        {#                        </tr>#}
+        {#                    {% endfor %}#}
+        {#                </table>#}
+        {#            </div>#}
+        {#        </div>#}
+        {#            </div>#}
+        {#        </div>#}
+
+        <div class="modal fade" id="import_umbrella" tabindex="-1" aria-labelledby="exampleModalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="exampleModalLabel">入库伞</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form method="POST" action="/import_umbrella/">
+                            {% csrf_token %}
+                            <input hidden="true" name="user" value="{{ request.user.username }}">
+                            <div class="mb-3">
+                                <label for="recipient-name" class="col-form-label">伞类型:</label>
+                                {{ Import_Umbrella_Form.type }}
+                            </div>
+                            <div class="mb-3">
+                                <label for="recipient-name" class="col-form-label">成本价：</label>
+                                {{ Import_Umbrella_Form.price }}
+                            </div>
+                            <div class="mb-3">
+                                <label for="recipient-name" class="col-form-label">批次数量：</label>
+                                <input class="form-control" name="quantity">
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭
+                                </button>
+                                <input type="submit" class="btn btn-primary" value="确认">
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="modal fade" id="place_umbrella" tabindex="-1" aria-labelledby="exampleModalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="exampleModalLabel">放置伞</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form method="POST" action="/place_umbrella/">
+                            {% csrf_token %}
+                            <input hidden="true" name="user" value="{{ request.user.username }}">
+
+                            <div class="mb-3">
+                                <label for="recipient-name" class="col-form-label">伞起始编号：</label>
+                                <input class="form-control" name="start">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="recipient-name" class="col-form-label">伞结束编号：</label>
+                                <input class="form-control" name="end">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="recipient-name" class="col-form-label">放置地点:</label>
+                                {{ place_umbrella.place }}
+                            </div>
+
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭
+                                </button>
+                                <input type="submit" class="btn btn-primary" value="确认">
+                            </div>
+                        </form>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% for place in pls %}
+            <div class="modal fade modal-lg" id="place{{ place.id }}" tabindex="-1"
+                 aria-labelledby="exampleModalLabel"
+                 aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h1 class="modal-title fs-5" id="exampleModalLabel">{{ place.name }}放置情况</h1>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                    aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="container-sm col-md">
+                                <table class="table table-striped">
+                                    <thead>
+                                    <tr>
+                                        <th>第<i class="bi bi-1-circle"></i>列</th>
+                                        <th>第<i class="bi bi-2-circle"></i>列</th>
+                                        <th>第<i class="bi bi-3-circle"></i>列</th>
+                                        <th>第<i class="bi bi-4-circle"></i>列</th>
+                                        <th>第<i class="bi bi-5-circle"></i>列</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for row in place.table %}
+                                        <tr>
+                                            {% for item in row %}
+                                                {% if item %}
+                                                    <th>{{ item }}</th>
+                                                {% else %}
+                                                    <th><i class="bi bi-umbrella"></i></th>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </tr>
+                                    {% endfor %}
+
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+
+        {% for user in UserInfo_list %}
+            <div class="modal fade" id="confirm{{ user.id }}" tabindex="-1" aria-labelledby="exampleModalLabel"
+                 aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h1 class="modal-title fs-5" id="exampleModalLabel">确定要删除{{ user.name }}吗？</h1>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                    aria-label="Close"></button>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭
+                            </button>
+                            <a class="btn btn-danger" href="delete/?name={{ user.username }}">
+                                删除
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+
+        {% for umbrella in Umbrella_list %}
+            <div class="modal fade" id="umbrella_detail{{ umbrella.id }}" tabindex="-1"
+                 aria-labelledby="exampleModalLabel"
+                 aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3 class="modal-title fs-5" id="exampleModalLabel">{{ umbrella }}详情</h3>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                    aria-label="Close"></button>
+                        </div>
+
+                        <div class="modal-body">
+                            <div class="container-sm col-md">
+                                <h5>
+                                    它正位于{{ umbrella.place.name }}的{{ umbrella.umbrella_place_id }}号位置上等您~</h5>
+                            </div>
+                        </div>
+
+                        <div class="modal-footer">
+                            <a type="button" class="btn btn-secondary" data-bs-dismiss="modal"">
+                            确定
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+
+        {% if msg %}
+            {% for user in msg %}
+                <div class="modal fade" id="user_detail" tabindex="-1"
+                     aria-labelledby="exampleModalLabel"
+                     aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h3 class="modal-title fs-5" id="exampleModalLabel">借伞详情</h3>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                        aria-label="Close"></button>
+                            </div>
+                            <h2>
+                                {{ user.name }}：
+                            </h2>
+                            <div class="modal-body">
+                                <table>
+                                    <thead>
+                                    <tr>
+                                        <th>伞类型</th>
+                                        <th>借伞时间</th>
+                                        <th>借伞地点</th>
+                                        <th>还伞时间</th>
+                                        <th>还伞地点</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for log in user.detail %}
+                                        <tr>
+                                            <td>{{ log.umbrella }}</td>
+                                            <td>{{ log.borrow_time|date:"Y-m-d" }}</td>
+                                            <td>{{ log.borrow_place }}</td>
+                                            <td>{{ log.back_time|date:"Y-m-d" }}</td>
+                                            <td>{{ log.back_place }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="modal-footer">
+                                <a type="button" class="btn btn-secondary" data-bs-dismiss="modal"">
+                                确定
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+    </div>
+
+
+
+{% endblock %}

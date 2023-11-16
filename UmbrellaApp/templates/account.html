@@ -1,0 +1,166 @@
+{% extends 'block/main.html' %}
+{% block content %}
+    <div class="container">
+    <div class="row">
+
+        {% for message in messages %}
+            <div class="alert alert-danger" role="alert">
+                {{ message }}
+            </div>
+        {% endfor %}
+
+        <div class="col-md-3">
+            <div class="card card-body">
+                <h4>欢迎您，{{ user.name }}</h4>
+                <hr>
+                {% if request.user.photo %}
+                    <img class="rounded" src="{{ request.user.photo.url }}">
+                {% else %}
+                    <img class="rounded" src="/default_logo.jpg">
+                {% endif %}
+                <hr>
+                <a class="btn btn-outline-info  btn-sm btn-block" data-bs-toggle="modal"
+                   data-bs-target="#update">更新账户信息</a>
+                <br>
+                <a class="btn btn-outline-info  btn-sm btn-block" data-bs-toggle="modal"
+                   data-bs-target="#change_password">修改密码</a>
+                <br>
+                <a class=" btn btn-outline-danger btn-sm btn-block" data-bs-toggle="modal"
+                   data-bs-target="#confirm_delete">删除此用户</a>
+
+            </div>
+            <br>
+            <div class="card card-body">
+                <h4>个人信息</h4>
+                <hr>
+                <h4 style="text-align: center;padding: 3px">余额：￥{{ user.balance }}</h4>
+                <h4 style="text-align: center;padding: 3px">总订单数：{{ use_number }}</h4>
+            </div>
+            <br>
+            <div class="card card-body">
+                <h4>联系信息</h4>
+                <hr>
+                <p>邮箱: {{ user.email }}</p>
+                <p>手机号: {{ user.phone }}</p>
+            </div>
+
+        </div>
+
+        <div class="col-md">
+            <div class="card card-body">
+
+                <form method="get">
+                    {% for field in my_filter.form %}
+                        {{ field.label }}
+                        {{ field }}
+                    {% endfor %}
+                    <button class="btn btn-primary" type="submit">Search</button>
+                </form>
+            </div>
+            <br>
+            <div class="card card-body">
+                <table class="table table-sm">
+                    <tr>
+                        <th>借伞日期</th>
+                        <th>伞号</th>
+                        <th>借伞地点</th>
+                        <th>还伞地点</th>
+                        <th>还伞时间</th>
+                        <th>消费金额</th>
+                    </tr>
+                    {% for log in user_logs %}
+                        <tr>
+                            <td>{{ log.borrow_time|date:"Y-m-d H:i:s" }}</td>
+                            <td>{{ log.umbrella }}</td>
+                            <td>{{ log.borrow_place }}</td>
+                            <td>{{ log.back_place }}</td>
+                            <td>{{ log.back_time|date:"Y-m-d H:i:s" }}</td>
+                            <td>{{ log.price }}</td>
+                        </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="update" tabindex="-1" aria-labelledby="exampleModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="exampleModalLabel">更新账户信息</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form method="POST" action="" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        {{ update_user_form.as_p }}
+                        <br>
+                        <input class="btn btn-primary" type="submit" value="提交">
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="change_password" tabindex="-1" aria-labelledby="exampleModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="exampleModalLabel">修改密码</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="container-sm">
+                        <div class="container centered">
+                            <form class="form-horizontal" method="post" action="/change_password/">
+                                {% csrf_token %}
+
+                                {% for field in change_password_form %}
+                                    {% if field.errors %}
+                                        <div class="form-group has-error">
+                                    {% else %}
+                                        <div class="form-group">
+                                    {% endif %}
+                                <label class="col-sm-4 control-label"
+                                       for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                <div class="col-sm-8">
+                                    {{ field }}
+                                    <p class="help-block">{{ field.help_text }}</p>
+                                    <p class="help-block">{{ field.errors }}</p>
+                                </div>
+                                </div>
+                                {% endfor %}
+                                <input type="submit" class="btn btn-primary" value="提交">
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="confirm_delete" tabindex="-1" aria-labelledby="exampleModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="exampleModalLabel">确认删除</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                    <h6>确认要删除您的账户吗？</h6>
+                </div>
+                {#                <hr>#}
+                <div class="modal-footer">
+                    <a class="btn btn-danger" href="/delete/?name={{ request.user.username }}">删除</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+{% endblock %}

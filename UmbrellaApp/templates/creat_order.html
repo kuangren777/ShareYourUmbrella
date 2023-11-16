@@ -1,0 +1,97 @@
+{% extends 'block/main.html' %}
+{% block content %}
+
+    <div class="container container-sm">
+    {% for message in messages %}
+        <div class="alert alert-danger" role="alert">
+            {{ message }}
+        </div>
+    {% endfor %}
+        <div class="row">
+            <div class="col-sm-6 mb-3 mb-sm-0">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">借伞</h5>
+                        <p class="card-text">借伞</p>
+                        <a class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#borrow">借伞</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-sm-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">还伞</h5>
+                        <p class="card-text">还伞</p>
+                        <a class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#back">还伞</a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+
+        <div class="modal fade" id="borrow" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="exampleModalLabel">借出伞</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form method="POST" action="/creat_order/borrow/">
+                            {% csrf_token %}
+                            <input hidden="true" name="user" value="{{ request.user.username }}">
+
+                            {#                            <div class="mb-3">#}
+                            {#                                <label for="recipient-name" class="col-form-label">伞:</label>#}
+                            {#                                {{ form.umbrella }}#}
+                            {#                            </div>#}
+
+                            <div class="mb-3">
+                                <label for="message-text" class="col-form-label">借出地:</label>
+                                {{ form.borrow_place }}
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="message-text" class="col-form-label">位置序号:</label>
+                                <input name="umbrella_place_id" class="form-control">
+                            </div>
+
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                                <input type="submit" class="btn btn-primary" value="确认">
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="back" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="exampleModalLabel">还伞</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form method="POST" action="/creat_order/back/">
+                            {% csrf_token %}
+                            <input hidden="true" name="user" value="{{ request.user.username }}">
+                            <div class="mb-3">
+                                <label for="recipient-name" class="col-form-label">归还地点:</label>
+                                {{ form.back_place }}
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                                <input type="submit" class="btn btn-primary" value="确认">
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

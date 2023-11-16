@@ -1,0 +1,60 @@
+<style>
+    .hello-msg {
+        font-size: 16px;
+        color: black;
+        margin-left: 50px;
+        top: 50%;
+
+    }
+</style>
+
+<div>
+    {#    <header class="d-flex flex-wrap justify-content-center py-3 mb-4 border-bottom">#}
+    <header class="d-flex flex-wrap justify-content-center py-3 mb-4 border-bottom fixed-top"
+            style="background-color: #e3f2fd;">
+{#            style="background-color: #c1f596;">#}
+        <a href="#" class="d-flex align-items-center mb-5 mb-md-0 ms-md-4 me-md-auto text-dark text-decoration-none">
+
+            <svg class="bi me-2" width="40" height="40">
+                {#            <svg class="fs-5" width="40" height="40" id="hello-msg">#}
+                <use xlink:href="#icon-gufengwujianzhongguofengsangufengsan_huaban_huaban" height="35"
+                     width="35"></use>
+            </svg>
+            <span class="fs-4">共享雨伞</span>
+
+        </a>
+        <ul class="nav nav-pills">
+            <li class="nav-item"><a href="/" class="nav-link active" aria-current="page"><i
+                    class="bi bi-house-fill"></i> 首页</a></li>
+            <li class="nav-item"><a href="/creat_order/" class="nav-link">创建订单</a></li>
+            <li class="nav-item"><a href="#" class="nav-link">Pricing</a></li>
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                   aria-expanded="false">
+                    {% if request.user.photo %}
+                    <img width="25" height="25" src="{{ request.user.photo.url }}"> 欢迎，{{ request.user }}
+                    {% else %}
+                    <img width="25" height="25" src="/default_logo.jpg"> 欢迎，{{ request.user }}
+                    {% endif %}
+{#                    <i class="bi bi-people-fill"></i> 欢迎，{{ request.user }}#}
+                </a>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="/user/{{ request.user }}/"><i class="bi bi-person-fill"></i> 我的主页</a>
+                    </li>
+                    <li><a class="dropdown-item" href="/logout/"><i class="bi bi-person-lock"></i> 注销</a></li>
+                    <li>
+                        <hr class="dropdown-divider">
+                    </li>
+                    <li><a class="dropdown-item" href="#"><i class="bi bi-sliders"></i> 订单列表</a></li>
+                    {#                    <li><a class="nav-link disabled">余额：￥{{ request.balance }}</a></li>#}
+                </ul>
+            </li>
+            {#            <li class="nav-item"><a href="/logout/" class="nav-link">欢迎，{{ request.user }}</a></li>#}
+        </ul>
+
+    </header>
+    <br>
+    <br>
+    <br>
+    <br>
+</div>

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>用户管理</title>
+</head>
+<body>
+<h1>INFO列表</h1>
+
+<table border="1">
+    <thead>
+        <tr>
+            <th>姓名</th>
+            <th>学号</th>
+            <th>学校</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in user_list %}
+        <tr>
+            <th>{{ item.user }}</th>
+            <th>{{ item.userid }}</th>
+            <th>{{ item.school }}</th>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+
+
+</body>
+</html>

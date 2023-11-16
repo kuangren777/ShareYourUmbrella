@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>共享雨伞-登录</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.min.css">
+    <link rel="stylesheet" href="/static/css/login.css">
+
+</head>
+
+<body background="/static/img/school.jpg" style="background-size:cover">
+
+<!-- partial:index.partial.html -->
+<div id="login-form-wrap">
+    <h2>共享雨伞-登录</h2>
+    <form id="login-form" method="post" action="">
+        {% csrf_token %}
+        <p>
+            <input type="text" id="username" name="username" placeholder="用户名" required><i
+                class="validation"><span></span><span></span></i>
+        </p>
+        <p>
+            <input type="password" id="password" name="password" placeholder="密码" required><i
+                class="validation"><span></span><span></span></i>
+        </p>
+        {% for message in messages %}
+            <div class="alert alert-danger" role="alert">
+                {{ message }}
+            </div>
+        {% endfor %}
+        <p>
+            <input type="submit" id="login" value="登录">
+        </p>
+    </form>
+    <div id="create-account-wrap">
+        <p>尚未注册？ <a href="#">点我</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;忘记密码？<a href="/reset_password/">点我</a></p>
+        <p class="text-center text-muted">© 2023 骆明宇，鞠怀诚，顾贇峰组</p>
+
+    </div><!--create-account-wrap-->
+</div><!--login-form-wrap-->
+<!-- partial -->
+
+</body>
+</html>

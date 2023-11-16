@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>共享雨伞-登录</title>
+{#    <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">#}
+
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet"
+          integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+    <link rel="stylesheet" href="../static/css/style.css">
+
+
+</head>
+<style>
+    .box-form .right input {
+        width: 90%;
+        padding: 10px;
+        margin-top: 25px;
+        font-size: 16px;
+        border: none;
+        outline: none;
+        border-bottom: 2px solid #B0B3B9;
+    }
+
+    .box-form .right .inputs {
+        overflow: hidden;
+    }
+</style>
+
+<body>
+<!-- partial:index.partial.html -->
+<div class="box-form">
+    <div class="left">
+        <div class="overlay">
+            <br>
+            <h1>Share<br>With Us!</h1>
+                <p></p>
+            {#		<span>#}
+            {#			<p>login with social media</p>#}
+            {#			<a href="#"><i class="fa fa-facebook" aria-hidden="true"></i></a>#}
+            {#			<a href="#"><i class="fa fa-twitter" aria-hidden="true"></i> Login with Twitter</a>#}
+            {#		</span>#}
+        </div>
+    </div>
+
+
+    <div class="right">
+        <h5>登录</h5>
+        <p>还没有账户？ <a href="/register/"> 立马点此进行注册！</a> 仅需几秒即可享受便利~</p>
+        <form method="post" action="">
+            {% csrf_token %}
+
+            <div class="input">
+                <input type="text" name="username" placeholder="用户名">
+                <br>
+                <input type="password" name="password" placeholder="密码">
+            </div>
+
+
+            <br>
+            {% for message in messages %}
+                <div class="alert alert-danger" role="alert">
+                    {{ message }}
+                </div>
+            {% endfor %}
+            <br>
+            <div class="remember-me--forget-password">
+                <!-- Angular -->
+                {#                <label>#}
+                {#                    <input type="checkbox" name="item" checked/>#}
+                {#                    <span class="text-checkbox">请记住我~</span>#}
+                {#                </label>#}
+                <a href="/reset_password/">忘记密码?点我!</a>
+            </div>
+
+            <br>
+            {#            <input type="submit"  class="btn btn-sm btn-check" value="登陆">#}
+            <button type="submit">登陆</button>
+        </form>
+    </div>
+
+</div>
+<!-- partial -->
+
+</body>
+</html>

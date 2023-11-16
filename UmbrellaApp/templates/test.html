@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="/static/plugins/bootstrap-5.3.0-alpha1-dist/css/bootstrap.css">
+    <link rel="stylesheet" href="/static/plugins/bootstrap-5.3.0-alpha1-dist/css/bootstrap.min.css">
+</head>
+<body>
+
+<div>
+    <header class="d-flex flex-wrap justify-content-center py-3 mb-4 border-bottom">
+        <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-dark text-decoration-none">
+            <svg class="bi me-2" width="40" height="32"></svg>
+            <span class="fs-4">共享雨伞</span>
+        </a>
+
+        <ul class="nav nav-pills">
+            <li class="nav-item"><a href="#" class="nav-link active" aria-current="page">首页</a></li>
+            <li class="nav-item"><a href="#" class="nav-link">Features</a></li>
+            <li class="nav-item"><a href="#" class="nav-link">Pricing</a></li>
+            <li class="nav-item"><a href="#" class="nav-link">FAQs</a></li>
+            <li class="nav-item"><a href="#" class="nav-link">About</a></li>
+        </ul>
+    </header>
+</div>
+<div>
+    <footer class="py-3 my-4">
+        <ul class="nav justify-content-center border-bottom pb-3 mb-3">
+            <li class="nav-item"><a href="#" class="nav-link px-2 text-muted">Home</a></li>
+            <li class="nav-item"><a href="#" class="nav-link px-2 text-muted">Features</a></li>
+            <li class="nav-item"><a href="#" class="nav-link px-2 text-muted">Pricing</a></li>
+            <li class="nav-item"><a href="#" class="nav-link px-2 text-muted">FAQs</a></li>
+            <li class="nav-item"><a href="#" class="nav-link px-2 text-muted">About</a></li>
+        </ul>
+        <p class="text-center text-muted">© 2023 骆明宇，鞠怀诚，顾贇峰组</p>
+    </footer>
+</div>
+<h1>用户表</h1>
+<table border="1">
+    <thead>
+    <tr>
+        <th>姓名</th>
+        <th>学号</th>
+        <th>学校</th>
+        <th>密码</th>
+        <th>账户余额</th>
+        <th>借伞编号</th>
+        <th>注册时间</th>
+        <th>上一次登陆日期</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for item in UserInfo_list %}
+        <tr>
+            <th>{{ item.user }}</th>
+            <th>{{ item.userid }}</th>
+            <th>{{ item.school }}</th>
+            <th>{{ item.pwd }}</th>
+            <th>{{ item.balance }}元</th>
+            <th>{{ item.umbrella }}</th>
+            <th>{{ item.registration_time|date:"Y-m-d H:i:s" }}</th>
+            <th>{{ item.recent_use_time|date:"Y-m-d H:i:s" }}</th>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<h1>雨伞表</h1>
+<table border="1">
+    <thead>
+    <tr>
+        <th>雨伞编号</th>
+        <th>入库日期</th>
+        <th>是否使用中</th>
+        <th>雨伞类型</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for item in Umbrella_list %}
+        <tr>
+            <th>{{ item.umbrella_id }}</th>
+            <th>{{ item.import_time }}</th>
+            <th>{{ item.is_using }}</th>
+            <th>{{ item.type }}</th>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+
+<h1>位置表</h1>
+<table border="1">
+    <thead>
+    <tr>
+        <th>伞的序号</th>
+        <th>放置的区域</th>
+        <th>伞在伞架上的第几格</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for item in place_list %}
+        <tr>
+            <th>{{ item.umbrella }}</th>
+            <th>{{ item.place_id }}</th>
+            <th>{{ item.umbrella_place_id }}</th>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<h1>日志系统</h1>
+<table border="1">
+    <thead>
+    <tr>
+        <th>用户学号</th>
+        <th>使用的伞的序号</th>
+        <th>借的地方</th>
+        <th>借出时间</th>
+        <th>返还的地方</th>
+        <th>归还日期</th>
+        <th>本次花销</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for item in log_list %}
+        <tr>
+            <th>{{ item.userid }}</th>
+            <th>{{ item.umbrella_id }}</th>
+            <th>{{ item.borrow_place_id }}</th>
+            <th>{{ item.borrow_time }}</th>
+            <th>{{ item.back_place }}</th>
+            <th>{{ item.back_time }}</th>
+            <th>{{ item.price }}</th>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+</body>
+</html>

@@ -1,0 +1,44 @@
+{% extends 'block/main.html' %}
+{% block content %}
+
+    <div class="container text-xl-center">
+        <h1>{{ place.name }}放置情况</h1>
+        <div class="card-body">
+            <div class="container-sm col-md-5">
+                <table class="table table-striped">
+                    <thead>
+                    <tr>
+                        <th>第<i class="bi bi-1-circle"></i>列</th>
+                        <th>第<i class="bi bi-2-circle"></i>列</th>
+                        <th>第<i class="bi bi-3-circle"></i>列</th>
+                        <th>第<i class="bi bi-4-circle"></i>列</th>
+                        <th>第<i class="bi bi-5-circle"></i>列</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for i in table %}
+                        <tr>
+                            {% for item in i %}
+                                {% if item %}
+                                    <th>{{ item }}</th>
+                                {% else %}
+                                    <th><i class="bi bi-umbrella"></i></th>
+                                {% endif %}
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {% for message in messages %}
+            <div class="alert alert-danger" role="alert">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+
+
+{% endblock %}

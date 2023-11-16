@@ -1,0 +1,30 @@
+{
+  "id": "3869349",
+  "name": "共享雨伞",
+  "font_family": "iconfont",
+  "css_prefix_text": "icon-",
+  "description": "",
+  "glyphs": [
+    {
+      "icon_id": "7348132",
+      "name": "雨伞3",
+      "font_class": "shenghuoyongpin-",
+      "unicode": "e787",
+      "unicode_decimal": 59271
+    },
+    {
+      "icon_id": "7348154",
+      "name": "雨伞1",
+      "font_class": "shenghuoyongpin-1",
+      "unicode": "e78a",
+      "unicode_decimal": 59274
+    },
+    {
+      "icon_id": "12363187",
+      "name": "古风物件，中国风，伞，古风伞",
+      "font_class": "gufengwujianzhongguofengsangufengsan_huaban_huaban",
+      "unicode": "e624",
+      "unicode_decimal": 58916
+    }
+  ]
+}
