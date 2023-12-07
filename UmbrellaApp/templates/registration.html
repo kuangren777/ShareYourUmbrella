@@ -44,7 +44,7 @@
                                         <div class="form-outline flex-fill mb-0">
 
                                             <label class="form-label" for="form3Example4c">姓名：*</label>
-                                            {{ form.name }}
+                                            {{ form.user_real_name }}
 
                                         </div>
                                     </div>
@@ -53,8 +53,8 @@
                                         <i class="fas fa-lock fa-lg me-3 fa-fw"></i>
                                         <div class="form-outline flex-fill mb-0">
 
-                                            <label class="form-label" for="form3Example4c">学号：*</label>
-                                            {{ form.userid }}
+                                            <label class="form-label" for="form3Example4c">学工号：*</label>
+                                            {{ form.user_number }}
 
                                         </div>
                                     </div>
@@ -64,7 +64,7 @@
                                         <div class="form-outline flex-fill mb-0">
 
                                             <label class="form-label" for="form3Example4c">学校：*</label>
-                                            {{ form.school }}
+                                            {{ form.user_school }}
 
                                         </div>
                                     </div>
@@ -74,7 +74,7 @@
                                         <div class="form-outline flex-fill mb-0">
 
                                             <label class="form-label" for="form3Example4c">手机号：*</label>
-                                            {{ form.phone }}
+                                            {{ form.user_phone }}
 
                                         </div>
                                     </div>
@@ -100,7 +100,7 @@
 
                                     <div class="form-check d-flex justify-content-center mb-5">
                                         <input class="form-check-input me-2" type="checkbox" value=""
-                                               id="form2Example3c"/>
+                                               id="form2Example3c agreeCheckbox"/>
                                         <label class="form-check-label" for="form2Example3">
                                             我同意遵守雨伞共享平台 <a href="#!">相关使用规定</a>。
                                         </label>
@@ -109,7 +109,8 @@
                                     <div class="d-flex justify-content-center mx-4 mb-3 mb-lg-4">
                                         <a class="btn btn-success btn-lg" href="/login/">返回登陆</a>
                                         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                                        <input type="submit" class="btn btn-primary btn-lg" value="立即注册">
+                                        <input id="submitBtn" type="submit" class="btn btn-primary btn-lg"
+                                               value="立即注册">
                                     </div>
 
                                 </form>
@@ -128,6 +129,18 @@
         </div>
     </div>
 </section>
+<script>
+    document.addEventListener('DOMContentLoaded', (event) => {
+        document.getElementById('submitBtn').addEventListener('click', function (event) {
+            var isAgreed = document.getElementById('agreeCheckbox').checked;
+            if (!isAgreed) {
+                alert('请先同意相关使用规定。');
+                event.preventDefault();
+            }
+        });
+    });
+</script>
+
 {#<form method="post" action="">#}
 {#    {% csrf_token %}#}
 {#    {{ form }}#}

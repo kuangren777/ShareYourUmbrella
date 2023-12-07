@@ -2,11 +2,11 @@
 {% block content %}
 
     <div class="container container-sm">
-    {% for message in messages %}
-        <div class="alert alert-danger" role="alert">
-            {{ message }}
-        </div>
-    {% endfor %}
+        {% for message in messages %}
+            <div class="alert alert-danger" role="alert">
+                {{ message }}
+            </div>
+        {% endfor %}
         <div class="row">
             <div class="col-sm-6 mb-3 mb-sm-0">
                 <div class="card">
@@ -50,12 +50,14 @@
 
                             <div class="mb-3">
                                 <label for="message-text" class="col-form-label">借出地:</label>
-                                {{ form.borrow_place }}
+                                {{ order_form.lending_site_id }}
                             </div>
 
                             <div class="mb-3">
-                                <label for="message-text" class="col-form-label">位置序号:</label>
-                                <input name="umbrella_place_id" class="form-control">
+                                <label for="position-select" class="col-form-label">位置序号:</label>
+                                <select name="umbrella_place_id" class="form-select" id="position-select">
+                                    <!-- JavaScript 将动态填充选项 -->
+                                </select>
                             </div>
 
                             <div class="modal-footer">
@@ -81,7 +83,13 @@
                             <input hidden="true" name="user" value="{{ request.user.username }}">
                             <div class="mb-3">
                                 <label for="recipient-name" class="col-form-label">归还地点:</label>
-                                {{ form.back_place }}
+                                {{ order_form.return_site_id }}
+                            </div>
+                            <div class="mb-3">
+                                <label for="return-position-select" class="col-form-label">归还位置:</label>
+                                <select id="return-position-select" name="return_lay_id" class="form-select">
+                                    <!-- AJAX 请求将更新这个选择框的选项 -->
+                                </select>
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
@@ -93,5 +101,77 @@
             </div>
         </div>
     </div>
+
+    <script>
+        var siteSelect = document.getElementById('site-select');
+        var positionSelect = document.getElementById('position-select');
+
+        siteSelect.addEventListener('change', function () {
+            var siteId = this.value;
+            if (siteId === '') {
+                positionSelect.innerHTML = '';  // 清空选项
+                addDefaultOption(positionSelect, '请选择借伞地点');
+            } else {
+                fetch('/get_empty_positions/' + siteId + '/')
+                    .then(response => response.json())
+                    .then(data => {
+                        positionSelect.innerHTML = '';  // 清空之前的选项
+                        addDefaultOption(positionSelect, '请选择借伞地点');
+
+                        Object.entries(data.positions_info).forEach(([position, umbrella_id]) => {
+                            var option = document.createElement('option');
+                            option.value = position;
+                            option.textContent = `位置: ${position}, 伞号: ${umbrella_id}`;
+                            positionSelect.appendChild(option);
+                        });
+                    });
+            }
+        });
+
+        function addDefaultOption(selectElement, text) {
+            var defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = text;
+            selectElement.appendChild(defaultOption);
+        }
+    </script>
+
+    <script>
+        var returnSiteSelect = document.getElementById('id_return_site_id');  // 确保 ID 与 Django form 字段匹配
+        var returnPositionSelect = document.getElementById('return-position-select');  // 归还位置选择框的 ID
+
+        returnSiteSelect.addEventListener('change', function () {
+            var siteId = this.value;
+            if (siteId === '') {
+                returnPositionSelect.innerHTML = '';  // 清空选项
+                addDefaultOption(returnPositionSelect, '请选择归还地点');
+            } else {
+                fetch('/get_free_positions/' + siteId + '/')  // 确保这个 URL 是正确的
+                    .then(response => response.json())
+                    .then(data => {
+                        returnPositionSelect.innerHTML = '';  // 清空之前的选项
+                        addDefaultOption(returnPositionSelect, '请选择归还地点');
+
+                        data.free_positions.forEach(function (position) {
+                            var option = document.createElement('option');
+                            option.value = position;
+                            option.textContent = '位置 ' + position;
+                            returnPositionSelect.appendChild(option);
+                        });
+                    });
+            }
+        });
+
+        function addDefaultOption(selectElement, text) {
+            var defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = text;
+            selectElement.appendChild(defaultOption);
+        }
+    </script>
+
+
+
+
 
 {% endblock %}

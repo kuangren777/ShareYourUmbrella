@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.contrib.auth import authenticate
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.password_validation import validate_password
@@ -44,16 +46,17 @@ from .models import *
 class CreateUserForm(UserCreationForm):
     class Meta:
         model = User
-        fields = ['username', 'email', 'password1', 'password2', 'user_school', 'user_name', 'user_id', 'user_phone']
+        fields = ['username', 'email', 'password1', 'password2', 'user_school', 'user_real_name', 'user_number',
+                  'user_phone']
 
         labels = {
-            'username': '用户名',
+            'username': '用户昵称',
             'email': '邮箱',
             'password1': '密码',
             'password2': '确认密码',
             'user_school': '学校',
-            'user_name': '姓名',
-            'user_id': '学号',
+            'user_real_name': '真实姓名',
+            'user_number': '学号',
             'user_phone': '电话号码',
         }
 
@@ -63,11 +66,10 @@ class CreateUserForm(UserCreationForm):
             'password1': forms.PasswordInput(attrs={'class': 'form-control'}),
             'password2': forms.PasswordInput(attrs={'class': 'form-control'}),
             'user_school': forms.TextInput(attrs={'class': 'form-control'}),
-            'user_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'user_id': forms.TextInput(attrs={'class': 'form-control'}),
+            'user_real_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'user_number': forms.TextInput(attrs={'class': 'form-control'}),
             'user_phone': forms.TextInput(attrs={'class': 'form-control'}),
         }
-
 
 
 # class ForgetUserForm(UserCreationForm):
@@ -201,12 +203,12 @@ class CreateUserForm(UserCreationForm):
 class UpdateUserForm(forms.ModelForm):
     class Meta:
         model = User
-        fields = ['email', 'user_school', 'user_name', 'user_id', 'user_phone', 'user_photo']  # 更新字段
+        fields = ['email', 'user_school', 'user_real_name', 'user_id', 'user_phone', 'user_photo']  # 更新字段
 
         labels = {
             'email': '邮箱',
             'user_school': '学校',
-            'user_name': '姓名',
+            'user_real_name': '真实姓名',
             'user_id': '学号',
             'user_phone': '电话号码',
             'user_photo': '头像',
@@ -215,7 +217,7 @@ class UpdateUserForm(forms.ModelForm):
         widgets = {
             'email': forms.TextInput(attrs={'class': 'form-control'}),
             'user_school': forms.TextInput(attrs={'class': 'form-control'}),
-            'user_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'user_real_name': forms.TextInput(attrs={'class': 'form-control'}),
             'user_id': forms.TextInput(attrs={'class': 'form-control'}),
             'user_phone': forms.TextInput(attrs={'class': 'form-control'}),
             'user_photo': forms.ClearableFileInput(attrs={'class': 'form-control'}),
@@ -223,13 +225,16 @@ class UpdateUserForm(forms.ModelForm):
 
         # 请注意：不需要在此定义 'user_password' 字段，因为用户密码不应该在此表单中更新
 
+
 class ChangePasswordForm(forms.Form):
     """
     修改密码表单
     """
-    old_password = forms.CharField(label='旧密码', max_length=32, widget=forms.PasswordInput(attrs={'class': 'form-control'}))
+    old_password = forms.CharField(label='旧密码', max_length=32,
+                                   widget=forms.PasswordInput(attrs={'class': 'form-control'}))
     password = forms.CharField(label='密码', max_length=32, widget=forms.PasswordInput(attrs={'class': 'form-control'}))
-    re_password = forms.CharField(label='重复密码', max_length=32, widget=forms.PasswordInput(attrs={'class': 'form-control'}))
+    re_password = forms.CharField(label='重复密码', max_length=32,
+                                  widget=forms.PasswordInput(attrs={'class': 'form-control'}))
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user')
@@ -250,7 +255,14 @@ class ChangePasswordForm(forms.Form):
             self.add_error('password', e)
         return self.cleaned_data
 
+
 class OrderForm(forms.ModelForm):
+    lending_site_id = forms.ModelChoiceField(
+        queryset=Site.objects.all(),
+        widget=forms.Select(attrs={'class': 'form-select', 'id': 'site-select'}),
+        label='借出地'
+    )
+
     class Meta:
         model = Diary
         fields = ['umbrella_id', 'lending_site_id', 'return_site_id']  # 更新字段
@@ -258,41 +270,100 @@ class OrderForm(forms.ModelForm):
         labels = {
             'umbrella_id': '伞',
             'lending_site_id': '借的地方',
+            ''
             'return_site_id': '归还地方',
         }
 
         widgets = {
             'umbrella_id': forms.Select(attrs={'class': 'form-select'}),
-            'lending_site_id': forms.Select(attrs={'class': 'form-select'}),
+            'lending_site_id': forms.TextInput(attrs={'class': 'form-control'}),
             'return_site_id': forms.Select(attrs={'class': 'form-select'}),
         }
+
 
 class ImportUmbrellaForm(forms.ModelForm):
     class Meta:
         model = Umbrella
-        fields = ['umbrella_type', 'umbrella_cost_price']  # 更新字段
+        fields = ['umbrella_type_id', 'umbrella_cost_price']  # 更新字段
 
         labels = {
-            'umbrella_type': '类型',
+            'umbrella_type_id': '类型id',
             'umbrella_cost_price': '成本价',
         }
 
         widgets = {
-            'umbrella_type': forms.Select(attrs={'class': 'form-select'}),
+            'umbrella_type_id': forms.Select(attrs={'class': 'form-select'}),
             'umbrella_cost_price': forms.TextInput(attrs={'class': 'form-control'}),
         }
+
 
 class PlaceUmbrella(forms.ModelForm):
     class Meta:
         model = Umbrella
-        fields = ['umbrella_available', 'site_id']  # 更新字段
+        # fields = ['umbrella_available', 'site_id']  # 更新字段
+        fields = ['umbrella_available']  # 更新字段
 
         labels = {
             'umbrella_available': '可用性',
-            'site_id': '放置地点',
+            # 'site_id': '放置地点',
         }
 
         widgets = {
             'umbrella_available': forms.CheckboxInput(attrs={'class': 'form-check'}),
-            'site_id': forms.Select(attrs={'class': 'form-select'}),
+            # 'site_id': forms.Select(attrs={'class': 'form-select'}),
         }
+
+
+class ReportRepairUmbrellaForm(forms.ModelForm):
+    class Meta:
+        model = Repair
+        # fields = ['umbrella_id', 'repair_type_id', 'notes', 'repair_time']
+        fields = ['umbrella_id', 'repair_type_id', 'notes']
+
+        labels = {
+            'umbrella_id': '伞编号',
+            'repair_type_id': '维修类型',
+            'notes': '备注',
+            # 'repair_time': '维修时间',
+        }
+
+        widgets = {
+            'umbrella_id': forms.Select(attrs={'class': 'form-select'}),
+            'repair_type_id': forms.Select(attrs={'class': 'form-select'}),
+            'notes': forms.Textarea(attrs={'class': 'form-control'}),
+            # 'repair_time': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
+        }
+
+
+class RepairUmbrellaForm(forms.ModelForm):
+    is_repaired = forms.BooleanField(required=False, label='维修完成，不报废')
+
+    class Meta:
+        model = Repair
+        fields = ['umbrella_id', 'repair_type_id', 'notes', 'is_repaired']
+
+        labels = {
+            'umbrella_id': '伞编号',
+            'repair_type_id': '维修类型',
+            'notes': '备注',
+            # 'repair_time': '维修时间',
+            "is_repaired": '维修完成，不报废',
+        }
+
+        widgets = {
+            'umbrella_id': forms.Select(attrs={'class': 'form-select'}),
+            'repair_type_id': forms.Select(attrs={'class': 'form-select'}),
+            'notes': forms.Textarea(attrs={'class': 'form-control'}),
+        }
+
+    # def save(self, commit=True):
+    #     repair = super().save(commit=False)
+    #     if self.cleaned_data['is_repaired']:
+    #         repair.repair_time = datetime.now()
+    #     else:
+    #         repair.notes += " 已报废。"
+    #         repair.umbrella_id.umbrella_scrapped = True
+    #         repair.umbrella_id.save()
+    #     if commit:
+    #         repair.save()
+    #     return repair

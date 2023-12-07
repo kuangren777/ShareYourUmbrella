@@ -1,166 +1,414 @@
 {% extends 'block/main.html' %}
 {% block content %}
     <div class="container">
-    <div class="row">
+        <div class="row">
 
-        {% for message in messages %}
-            <div class="alert alert-danger" role="alert">
-                {{ message }}
-            </div>
-        {% endfor %}
+            {% for message in messages %}
+                <div class="alert alert-danger" role="alert">
+                    {{ message }}
+                </div>
+            {% endfor %}
 
-        <div class="col-md-3">
-            <div class="card card-body">
-                <h4>欢迎您，{{ user.name }}</h4>
-                <hr>
-                {% if request.user.photo %}
-                    <img class="rounded" src="{{ request.user.photo.url }}">
-                {% else %}
-                    <img class="rounded" src="/default_logo.jpg">
-                {% endif %}
-                <hr>
-                <a class="btn btn-outline-info  btn-sm btn-block" data-bs-toggle="modal"
-                   data-bs-target="#update">更新账户信息</a>
+            <div class="col-md-3">
+                <div class="card card-body">
+                    <h4>欢迎您，{{ user.username }}</h4>
+                    <hr>
+                    {% if request.user.photo %}
+                        <img class="rounded" src="{{ request.user.photo.url }}">
+                    {% else %}
+                        <img class="rounded" src="/default_logo.jpg">
+                    {% endif %}
+                    <hr>
+                    <a class="btn btn-outline-info  btn-sm btn-block" data-bs-toggle="modal"
+                       data-bs-target="#update">更新账户信息</a>
+                    <br>
+                    <a class="btn btn-outline-info  btn-sm btn-block" data-bs-toggle="modal"
+                       data-bs-target="#change_password">修改密码</a>
+                    <br>
+                    <a class=" btn btn-outline-danger btn-sm btn-block" data-bs-toggle="modal"
+                       data-bs-target="#confirm_delete">删除此用户</a>
+
+                </div>
                 <br>
-                <a class="btn btn-outline-info  btn-sm btn-block" data-bs-toggle="modal"
-                   data-bs-target="#change_password">修改密码</a>
+                <div class="card card-body">
+                    <h4>个人信息</h4>
+                    <hr>
+                    <h4 style="text-align: center;padding: 3px">余额：￥{{ user.user_balance }}</h4>
+                    <h4 style="text-align: center;padding: 3px">总订单数：{{ use_number }}</h4>
+                </div>
                 <br>
-                <a class=" btn btn-outline-danger btn-sm btn-block" data-bs-toggle="modal"
-                   data-bs-target="#confirm_delete">删除此用户</a>
-
-            </div>
-            <br>
-            <div class="card card-body">
-                <h4>个人信息</h4>
-                <hr>
-                <h4 style="text-align: center;padding: 3px">余额：￥{{ user.balance }}</h4>
-                <h4 style="text-align: center;padding: 3px">总订单数：{{ use_number }}</h4>
-            </div>
-            <br>
-            <div class="card card-body">
-                <h4>联系信息</h4>
-                <hr>
-                <p>邮箱: {{ user.email }}</p>
-                <p>手机号: {{ user.phone }}</p>
-            </div>
-
-        </div>
-
-        <div class="col-md">
-            <div class="card card-body">
-
-                <form method="get">
-                    {% for field in my_filter.form %}
-                        {{ field.label }}
-                        {{ field }}
-                    {% endfor %}
-                    <button class="btn btn-primary" type="submit">Search</button>
-                </form>
-            </div>
-            <br>
-            <div class="card card-body">
-                <table class="table table-sm">
-                    <tr>
-                        <th>借伞日期</th>
-                        <th>伞号</th>
-                        <th>借伞地点</th>
-                        <th>还伞地点</th>
-                        <th>还伞时间</th>
-                        <th>消费金额</th>
-                    </tr>
-                    {% for log in user_logs %}
-                        <tr>
-                            <td>{{ log.borrow_time|date:"Y-m-d H:i:s" }}</td>
-                            <td>{{ log.umbrella }}</td>
-                            <td>{{ log.borrow_place }}</td>
-                            <td>{{ log.back_place }}</td>
-                            <td>{{ log.back_time|date:"Y-m-d H:i:s" }}</td>
-                            <td>{{ log.price }}</td>
-                        </tr>
-                    {% endfor %}
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal fade" id="update" tabindex="-1" aria-labelledby="exampleModalLabel"
-         aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h1 class="modal-title fs-5" id="exampleModalLabel">更新账户信息</h1>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="card card-body">
+                    <h4>联系信息</h4>
+                    <hr>
+                    <p>邮箱: {{ user.email }}</p>
+                    <p>手机号: {{ user.user_phone }}</p>
                 </div>
-                <div class="modal-body">
-                    <form method="POST" action="" enctype="multipart/form-data">
-                        {% csrf_token %}
-                        {{ update_user_form.as_p }}
-                        <br>
-                        <input class="btn btn-primary" type="submit" value="提交">
-                    </form>
 
-                </div>
             </div>
-        </div>
-    </div>
 
-    <div class="modal fade" id="change_password" tabindex="-1" aria-labelledby="exampleModalLabel"
-         aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h1 class="modal-title fs-5" id="exampleModalLabel">修改密码</h1>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="container-sm">
-                        <div class="container centered">
-                            <form class="form-horizontal" method="post" action="/change_password/">
-                                {% csrf_token %}
-
-                                {% for field in change_password_form %}
-                                    {% if field.errors %}
-                                        <div class="form-group has-error">
-                                    {% else %}
-                                        <div class="form-group">
-                                    {% endif %}
-                                <label class="col-sm-4 control-label"
-                                       for="{{ field.id_for_label }}">{{ field.label }}</label>
-                                <div class="col-sm-8">
-                                    {{ field }}
-                                    <p class="help-block">{{ field.help_text }}</p>
-                                    <p class="help-block">{{ field.errors }}</p>
-                                </div>
-                                </div>
-                                {% endfor %}
-                                <input type="submit" class="btn btn-primary" value="提交">
-                            </form>
+            <div class="col-md-9">
+                <div class="card-body">
+                    {% for message in messages %}
+                        <div class="alert alert-danger" role="alert">
+                            {{ message }}
                         </div>
+                    {% endfor %}
+                    <div class="row">
+                        <div class="col-sm-6 mb-3 mb-sm-0">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">借伞</h5>
+                                    <p class="card-text">借伞</p>
+                                    <a class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#borrow">借伞</a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-6">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">还伞</h5>
+                                    <p class="card-text">还伞</p>
+                                    <a class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#back">还伞</a>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+
+                    <div class="modal fade" id="borrow" tabindex="-1" aria-labelledby="exampleModalLabel"
+                         aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h1 class="modal-title fs-5" id="exampleModalLabel">借出伞</h1>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                            aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <form method="POST" action="/creat_order/borrow/">
+                                        {% csrf_token %}
+                                        <input hidden="true" name="user" value="{{ request.user.username }}">
+
+                                        {#                            <div class="mb-3">#}
+                                        {#                                <label for="recipient-name" class="col-form-label">伞:</label>#}
+                                        {#                                {{ form.umbrella }}#}
+                                        {#                            </div>#}
+
+                                        <div class="mb-3">
+                                            <label for="message-text" class="col-form-label">借出地:</label>
+                                            {{ order_form.lending_site_id }}
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="position-select" class="col-form-label">位置序号:</label>
+                                            <select name="umbrella_place_id" class="form-select" id="position-select">
+                                                <!-- JavaScript 将动态填充选项 -->
+                                            </select>
+                                        </div>
+
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭
+                                            </button>
+                                            <input type="submit" class="btn btn-primary" value="确认">
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal fade" id="back" tabindex="-1" aria-labelledby="exampleModalLabel"
+                         aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h1 class="modal-title fs-5" id="exampleModalLabel">还伞</h1>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                            aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <form method="POST" action="/creat_order/back/">
+                                        {% csrf_token %}
+                                        <input hidden="true" name="user" value="{{ request.user.username }}">
+                                        <div class="mb-3">
+                                            <label for="recipient-name" class="col-form-label">归还地点:</label>
+                                            {{ order_form.return_site_id }}
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="return-position-select" class="col-form-label">归还位置:</label>
+                                            <select id="return-position-select" name="return_lay_id"
+                                                    class="form-select">
+                                                <!-- AJAX 请求将更新这个选择框的选项 -->
+                                            </select>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭
+                                            </button>
+                                            <input type="submit" class="btn btn-primary" value="确认">
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <br>
+                <div class="card card-body">
+
+                    <form method="get">
+                        {% for field in my_filter.form %}
+                            {{ field.label }}:{{ field }}
+                        {% endfor %}
+                        <button class="btn btn-primary" type="submit">Search</button>
+                    </form>
+                </div>
+                <br>
+                <div class="card card-body">
+                    <table class="table table-sm">
+                        <tr>
+                            <th>伞号</th>
+                            <th>借伞地点</th>
+                            <th>借伞时间</th>
+                            <th>还伞地点</th>
+                            <th>还伞时间</th>
+                            <th>消费金额</th>
+                            <th>评论</th>
+                        </tr>
+                        {% for log in user_logs %}
+                            <tr>
+                                <td>{{ log.umbrella_id }}</td>
+                                <td>{{ log.lending_site_id }}</td>
+                                <td>{{ log.lending_time|date:"Y-m-d H:i:s" }}</td>
+                                <td>{{ log.return_site_id }}</td>
+                                <td>{{ log.return_time|date:"Y-m-d H:i:s" }}</td>
+                                <td>{{ log.order_price|floatformat:2 }}</td>
+                                <td>
+                                    {% if log.comment %}
+                                        <!-- 显示已有评论的模态框触发按钮 -->
+                                        <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal"
+                                                data-bs-target="#viewCommentModal{{ log.diary_id }}">已评价
+                                        </button>
+
+                                        <!-- 已有评论的模态框 -->
+                                        <div class="modal fade" id="viewCommentModal{{ log.diary_id }}" tabindex="-1"
+                                             aria-labelledby="viewCommentModalLabel{{ log.diary_id }}"
+                                             aria-hidden="true">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title"
+                                                            id="viewCommentModalLabel{{ log.diary_id }}">
+                                                            评价内容</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                                aria-label="Close"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        {{ log.comment.comment_content }}
+                                                        <p>评分：{{ log.comment.comment_score }}</p><br>
+
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <p>评分时间：{{ log.comment.comment_time }}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% else %}
+                                        <!-- 添加新评论的模态框触发按钮 -->
+                                        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal"
+                                                data-bs-target="#commentModal{{ log.diary_id }}">评价
+                                        </button>
+
+                                        <!-- 新评论的模态框 -->
+                                        <div class="modal fade" id="commentModal{{ log.diary_id }}" tabindex="-1"
+                                             aria-labelledby="commentModalLabel{{ log.diary_id }}" aria-hidden="true">
+                                            <div class="modal-dialog">
+                                                <form method="post" action="{% url 'add_comment' log.diary_id %}">
+                                                    {% csrf_token %}
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title"
+                                                                id="commentModalLabel{{ log.diary_id }}">
+                                                                添加评论</h5>
+                                                            <button type="button" class="btn-close"
+                                                                    data-bs-dismiss="modal"
+                                                                    aria-label="Close"></button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                <textarea name="comment_content" class="form-control"
+                                                          placeholder="请输入您的评论..."></textarea>
+                                                            <input type="number" name="comment_score"
+                                                                   class="form-control"
+                                                                   placeholder="评分（1-5）" min="1" max="5">
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="submit" class="btn btn-primary">提交评论
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="update" tabindex="-1" aria-labelledby="exampleModalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="exampleModalLabel">更新账户信息</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form method="POST" action="" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            {{ update_user_form.as_p }}
+                            <br>
+                            <input class="btn btn-primary" type="submit" value="提交">
+                        </form>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="change_password" tabindex="-1" aria-labelledby="exampleModalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="exampleModalLabel">修改密码</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="container-sm">
+                            <div class="container centered">
+                                <form class="form-horizontal" method="post" action="/change_password/">
+                                    {% csrf_token %}
+
+                                    {% for field in change_password_form %}
+                                        {% if field.errors %}
+                                            <div class="form-group has-error">
+                                        {% else %}
+                                            <div class="form-group">
+                                        {% endif %}
+                                    <label class="col-sm-4 control-label"
+                                           for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                    <div class="col-sm-8">
+                                        {{ field }}
+                                        <p class="help-block">{{ field.help_text }}</p>
+                                        <p class="help-block">{{ field.errors }}</p>
+                                    </div>
+                                    </div>
+                                    {% endfor %}
+                                    <input type="submit" class="btn btn-primary" value="提交">
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="confirm_delete" tabindex="-1" aria-labelledby="exampleModalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="exampleModalLabel">确认删除</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <h6>确认要删除您的账户吗？</h6>
+                    </div>
+                    {#                <hr>#}
+                    <div class="modal-footer">
+                        <a class="btn btn-danger" href="/delete/?name={{ request.user.username }}">删除</a>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="modal fade" id="confirm_delete" tabindex="-1" aria-labelledby="exampleModalLabel"
-         aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h1 class="modal-title fs-5" id="exampleModalLabel">确认删除</h1>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
+    <script>
+        var siteSelect = document.getElementById('site-select');
+        var positionSelect = document.getElementById('position-select');
 
-                <div class="modal-body">
-                    <h6>确认要删除您的账户吗？</h6>
-                </div>
-                {#                <hr>#}
-                <div class="modal-footer">
-                    <a class="btn btn-danger" href="/delete/?name={{ request.user.username }}">删除</a>
-                </div>
-            </div>
-        </div>
-    </div>
+        console.log(siteSelect)
+
+        siteSelect.addEventListener('change', function () {
+            var siteId = this.value;
+            if (siteId === '') {
+                positionSelect.innerHTML = '';  // 清空选项
+                addDefaultOption(positionSelect, '请选择借伞地点');
+            } else {
+                fetch('/get_empty_positions/' + siteId + '/')
+                    .then(response => response.json())
+                    .then(data => {
+                        positionSelect.innerHTML = '';  // 清空之前的选项
+                        addDefaultOption(positionSelect, '请选择借伞地点');
+
+                        Object.entries(data.positions_info).forEach(([position, umbrella_id]) => {
+                            var option = document.createElement('option');
+                            option.value = position;
+                            option.textContent = `位置: ${position}, 伞号: ${umbrella_id}`;
+                            positionSelect.appendChild(option);
+                        });
+                    });
+            }
+        });
+
+        function addDefaultOption(selectElement, text) {
+            var defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = text;
+            selectElement.appendChild(defaultOption);
+        }
+    </script>
+
+    <script>
+        var returnSiteSelect = document.getElementById('id_return_site_id');  // 确保 ID 与 Django form 字段匹配
+        var returnPositionSelect = document.getElementById('return-position-select');  // 归还位置选择框的 ID
+
+        returnSiteSelect.addEventListener('change', function () {
+            var siteId = this.value;
+            if (siteId === '') {
+                returnPositionSelect.innerHTML = '';  // 清空选项
+                addDefaultOption(returnPositionSelect, '请选择归还地点');
+            } else {
+                fetch('/get_free_positions/' + siteId + '/')  // 确保这个 URL 是正确的
+                    .then(response => response.json())
+                    .then(data => {
+                        returnPositionSelect.innerHTML = '';  // 清空之前的选项
+                        addDefaultOption(returnPositionSelect, '请选择归还地点');
+
+                        data.free_positions.forEach(function (position) {
+                            var option = document.createElement('option');
+                            option.value = position;
+                            option.textContent = '位置 ' + position;
+                            returnPositionSelect.appendChild(option);
+                        });
+                    });
+            }
+        });
+
+        function addDefaultOption(selectElement, text) {
+            var defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = text;
+            selectElement.appendChild(defaultOption);
+        }
+    </script>
 
 
 {% endblock %}

@@ -1,5 +1,7 @@
 {% extends 'block/main.html' %}
 {% block content %}
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
     <style>
         #head_card {
             background-color: #00aefd;
@@ -88,9 +90,12 @@
                                     <hr>
                                     <tr>
                                         <th></th>
+                                        <th>编号</th>
                                         <th>姓名</th>
+                                        <th>昵称</th>
                                         <th>学号</th>
                                         <th>手机号</th>
+                                        <th>上次登录日期</th>
                                         <th>账户余额</th>
                                         <th>伞号</th>
                                     </tr>
@@ -101,12 +106,15 @@
                                                 <input class="form-check-input" type="checkbox" name="user"
                                                        value="{{ item.id }}">
                                             </td>
-                                            <td>{{ item.name }}</td>
-                                            <td>{{ item.userid }}</td>
-                                            <td>{{ item.phone }}</td>
-                                            <td>￥{{ item.balance }}</td>
-                                            {% if item.umbrella %}
-                                                <td>{{ item.umbrella }}</td>
+                                            <td>{{ item.user_id }}</td>
+                                            <td>{{ item.user_real_name }}</td>
+                                            <td>{{ item.username }}</td>
+                                            <td>{{ item.user_number }}</td>
+                                            <td>{{ item.user_phone }}</td>
+                                            <td>{{ item.user_last_login_date|date:"Y-m-d" }}</td>
+                                            <td>￥{{ item.user_balance }}</td>
+                                            {% if item.user_umbrella_id %}
+                                                <td>{{ item.user_umbrella_id }}</td>
                                             {% else %}
                                                 <td>未借</td>
                                             {% endif %}
@@ -129,31 +137,43 @@
                         <h1><i class="bi bi-umbrella"></i> 伞列表</h1>
                         <hr>
                         <div class="card card-body">
-                            <a class="btn btn-primary btn-sm btn-block" data-bs-toggle="modal"
-                               data-bs-target="#import_umbrella">入库伞</a>
+                            <div class="d-flex gap-2">
+                                <!-- 入库伞按钮 -->
+                                <a class="btn btn-primary btn-sm flex-shrink-0 px-5" data-bs-toggle="modal"
+                                   data-bs-target="#import_umbrella">入库伞</a>
+                                <!-- 报修伞按钮 -->
+                                <a class="btn btn-primary btn-sm flex-shrink-0 px-5" data-bs-toggle="modal"
+                                   data-bs-target="#report_repair_umbrella">报修伞</a>
+                                <!-- 维修伞按钮 -->
+                                <button class="btn btn-primary btn-sm flex-shrink-0 px-5" type="button"
+                                        data-bs-toggle="modal" data-bs-target="#repair_umbrella">
+                                    维修伞
+                                </button>
+
+
+                            </div>
+
 
                             <table class="table table-sm">
                                 <tr>
                                     <th>编号</th>
-                                    <th>可用性</th>
+                                    <th>状态</th>
                                     <th>类型</th>
                                     <th>入库日期</th>
                                     <th>上次使用</th>
                                     <th>放置位置</th>
                                     <th>操作</th>
                                 </tr>
-                                {% for item in Umbrella_list %}
+                                {% for item in Umbrella_list_with_positions %}
                                     <tr>
-                                        <td>{{ item.id }}</td>
-                                        {% if item.can_use %}
-                                            <td>可用</td>
-                                        {% else %}
-                                            <td>不可用</td>
-                                        {% endif %}
-                                        <td>{{ item.type }}</td>
-                                        <td>{{ item.import_time|date:"Y-m-d" }}</td>
-                                        <td>{{ item.last_use|date:"Y-m-d" }}</td>
-                                        <td>{{ item.place }}</td>
+                                        <td>{{ item.umbrella.umbrella_id }}</td>
+                                        <td {% if item.is_alarm %} style="color: red; font-weight: bold;" {% endif %}>
+                                            {{ item.status }}
+                                        </td>
+                                        <td>{{ item.umbrella.umbrella_type_id.umbrella_type }}</td>
+                                        <td>{{ item.umbrella.umbrella_warehousing_date|date:"Y-m-d" }}</td>
+                                        <td>{{ item.umbrella.umbrella_last_used_date|date:"Y-m-d" }}</td>
+                                        <td>{{ item.position }}</td>
                                         <td>
                                             <a class="btn btn-primary btn-sm" data-bs-toggle="modal"
                                                data-bs-target="#umbrella_detail{{ item.id }}">详情</a>
@@ -188,13 +208,13 @@
                                 </tr>
                                 {% for log in log_list %}
                                     <tr>
-                                        <td>{{ log.id }}</td>
-                                        <td>{{ log.umbrella }}</td>
-                                        <td>{{ log.borrow_time|date:"Y-m-d H:i:s" }}</td>
-                                        <td>{{ log.borrow_place }}</td>
-                                        <td>{{ log.back_time|date:"Y-m-d H:i:s" }}</td>
-                                        <td>{{ log.back_place }}</td>
-                                        <td>{{ log.price }}</td>
+                                        <td>{{ log.diary_id }}</td>
+                                        <td>{{ log.umbrella_id }}</td>
+                                        <td>{{ log.lending_time|date:"Y-m-d H:i:s" }}</td>
+                                        <td>{{ log.lending_site_id }}</td>
+                                        <td>{{ log.return_time|date:"Y-m-d H:i:s" }}</td>
+                                        <td>{{ log.return_site_id }}</td>
+                                        <td>{{ log.order_price|floatformat:"2" }}</td>
                                     </tr>
                                 {% endfor %}
                             </table>
@@ -220,12 +240,12 @@
                                 </tr>
                                 {% for item in location_list %}
                                     <tr>
-                                        <td>{{ item.id }}</td>
-                                        <td>{{ item.name }}</td>
-                                        <td>{{ item.num }}/{{ item.num_sum }}</td>
+                                        <td>{{ item.site_id }}</td>
+                                        <td>{{ item.site_address }}</td>
+                                        <td>{{ item.num }}/{{ item.site_store_num }}</td>
                                         <td>
                                             <a class="btn btn-primary btn-sm btn-block" data-bs-toggle="modal"
-                                               data-bs-target="#place{{ item.id }}">详情</a>
+                                               data-bs-target="#place{{ item.site_id }}">详情</a>
                                         </td>
                                     </tr>
                                 {% endfor %}
@@ -287,6 +307,7 @@
         {#            </div>#}
         {#        </div>#}
 
+        <!-- 入库伞模态框 -->
         <div class="modal fade" id="import_umbrella" tabindex="-1" aria-labelledby="exampleModalLabel"
              aria-hidden="true">
             <div class="modal-dialog">
@@ -301,11 +322,11 @@
                             <input hidden="true" name="user" value="{{ request.user.username }}">
                             <div class="mb-3">
                                 <label for="recipient-name" class="col-form-label">伞类型:</label>
-                                {{ Import_Umbrella_Form.type }}
+                                {{ Import_Umbrella_Form.umbrella_type_id }}
                             </div>
                             <div class="mb-3">
                                 <label for="recipient-name" class="col-form-label">成本价：</label>
-                                {{ Import_Umbrella_Form.price }}
+                                {{ Import_Umbrella_Form.umbrella_cost_price }}
                             </div>
                             <div class="mb-3">
                                 <label for="recipient-name" class="col-form-label">批次数量：</label>
@@ -314,6 +335,87 @@
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭
                                 </button>
+                                <input type="submit" class="btn btn-primary" value="确认">
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- 报修伞模态框 -->
+        <div class="modal fade" id="report_repair_umbrella" tabindex="-1" aria-labelledby="reportRepairUmbrellaLabel"
+             aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="reportRepairUmbrellaLabel">报修伞</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form method="POST" action="/report_repair_umbrella/">
+                            {% csrf_token %}
+                            {{ ReportRepairUmbrellaForm.as_p }}
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                                <input type="submit" class="btn btn-primary" value="确认">
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- 维修伞模态框 -->
+        <div class="modal fade" id="repair_umbrella" tabindex="-1" aria-labelledby="repairUmbrellaLabel"
+             aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="reportRepairUmbrellaLabel">维修伞</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form method="POST" action="/repair_umbrella/">
+                            {% csrf_token %}
+
+                            <!-- 维修类型下拉菜单 -->
+                            <div class="mb-3">
+                                <label for="repairTypeSelect" class="form-label">维修类型</label>
+                                <select id="repairTypeSelect" name="repair_type_id" class="form-select">
+                                    <option value="">请选择维修类型</option>
+                                    {% for repair_type in repair_types %}
+                                        <option value="{{ repair_type.repair_type_id }}">{{ repair_type.repair_type_id }}.{{ repair_type.repair_type }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <!-- 需要维修的雨伞下拉菜单 -->
+                            <div class="mb-3">
+                                <label for="umbrellaSelect" class="form-label">伞编号</label>
+                                <select id="umbrellaSelect" name="umbrella_id" class="form-select">
+                                    <option value="">请选择伞编号</option>
+                                </select>
+                            </div>
+
+                            <!-- 备注区域 -->
+                            <div class="mb-3">
+                                <label for="notes" class="form-label">备注</label>
+                                <textarea id="notes" name="notes" class="form-control"></textarea>
+                            </div>
+
+
+                            <div class="mb-3">
+                                <label class="form-label">是否维修完成，不勾选表示报废该伞</label>
+                                <div>{{ RepairUmbrellaForm.is_repaired }}</div>
+                            </div>
+                            <!-- 其他字段 -->
+
+
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
                                 <input type="submit" class="btn btn-primary" value="确认">
                             </div>
                         </form>
@@ -444,8 +546,12 @@
 
                         <div class="modal-body">
                             <div class="container-sm col-md">
-                                <h5>
-                                    它正位于{{ umbrella.place.name }}的{{ umbrella.umbrella_place_id }}号位置上等您~</h5>
+                                {% if umbrella.site_id %}
+                                    <h5>
+                                        它正位于{{ umbrella.place.name }}的{{ umbrella.umbrella_place_id }}号位置上等您~</h5>
+                                {% else %}
+                                    <h5>此伞已被借出~</h5>
+                                {% endif %}
                             </div>
                         </div>
 
@@ -471,9 +577,9 @@
                                 <button type="button" class="btn-close" data-bs-dismiss="modal"
                                         aria-label="Close"></button>
                             </div>
-                            <h2>
-                                {{ user.name }}：
-                            </h2>
+                            <h3>
+                                &nbsp;&nbsp;{{ user.username }}：
+                            </h3>
                             <div class="modal-body">
                                 <table>
                                     <thead>
@@ -488,11 +594,11 @@
                                     <tbody>
                                     {% for log in user.detail %}
                                         <tr>
-                                            <td>{{ log.umbrella }}</td>
+                                            <td>{{ log.umbrella_id }}</td>
                                             <td>{{ log.borrow_time|date:"Y-m-d" }}</td>
-                                            <td>{{ log.borrow_place }}</td>
-                                            <td>{{ log.back_time|date:"Y-m-d" }}</td>
-                                            <td>{{ log.back_place }}</td>
+                                            <td>{{ log.lending_site_id }}</td>
+                                            <td>{{ log.return_time|date:"Y-m-d" }}</td>
+                                            <td>{{ log.return_site_id }}</td>
                                         </tr>
                                     {% endfor %}
                                     </tbody>
@@ -511,6 +617,57 @@
         {% endif %}
 
     </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // 当任意一个可折叠区域被点击时
+            $('.collapse').on('show.bs.collapse', function () {
+                // 获取当前被点击的区域的ID
+                var active = $(this).attr('id');
+                // 遍历所有可折叠区域
+                $('.collapse').each(function () {
+                    // 如果不是当前被点击的区域，则折叠它
+                    if ($(this).attr('id') !== active) {
+                        $(this).collapse('hide');
+                    }
+                });
+            });
+        });
+    </script>
+
+    <script>
+        $(document).ready(function () {
+            $('#repairTypeSelect').change(function () {
+                var repairTypeId = $(this).val();
+                $.ajax({
+                    url: '/get_umbrellas_for_repair/' + repairTypeId,
+                    success: function (data) {
+                        var umbrellasSelect = $('#umbrellaSelect');
+                        umbrellasSelect.empty();
+                        umbrellasSelect.append('<option value="">请选择伞编号</option>');
+                        data.umbrellas.forEach(function (umbrella) {
+                            umbrellasSelect.append('<option value="' + umbrella.umbrella_id + '">' + umbrella.umbrella_id + '号伞' + '</option>');
+                        });
+                    }
+                });
+            });
+
+            $('#umbrellaSelect').change(function () {
+                var umbrellaId = $(this).val();
+                $.ajax({
+                    url: '/get_repair_notes/' + umbrellaId,
+                    success: function (data) {
+                        $('#notes').val(data.notes);
+                    }
+                });
+            });
+        });
+    </script>
+
+
+
+
 
 
 

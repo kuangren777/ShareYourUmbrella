@@ -27,9 +27,9 @@ class OrderFilter(django_filters.FilterSet):
             # 'back_time': '还伞时间',
         }
 
-        # widgets = {
-        #     'can_use': forms.CheckboxInput(attrs={'class': 'form-check'}),
-        #     'umbrella': forms.Select(attrs={'class': 'form-select'}),
-        #     'borrow_place': forms.Select(attrs={'class': 'form-select'}),
-        #     'back_place': forms.Select(attrs={'class': 'form-select'}),
-        # }
+        widgets = {
+            # 'can_use': forms.CheckboxInput(attrs={'class': 'form-check'}),
+            'umbrella_id': forms.Select(attrs={'class': 'form-select'}),
+            'lending_site_id': forms.Select(attrs={'class': 'form-select'}),
+            'return_site_id': forms.Select(attrs={'class': 'form-select'}),
+        }

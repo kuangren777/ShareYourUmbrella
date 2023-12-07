@@ -20,6 +20,7 @@ from django.contrib.auth import views as auth_views
 from django.urls import path
 
 from UmbrellaApp import views
+from UmbrellaApp import api
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -48,6 +49,21 @@ urlpatterns = [
 
     # 入库伞
     path("import_umbrella/", views.import_umbrella),
+    path("report_repair_umbrella/", views.report_repair_umbrella),
+    # path("get_pending_repairs/", views.get_pending_repairs),
+    # path('get_umbrellas_for_repair/<int:repair_type_id>/', views.get_umbrellas_for_repair,
+    #      name='get_umbrellas_for_repair'),
+
+    path('get_umbrellas_for_repair/<int:repair_type_id>', views.get_umbrellas_for_repair,
+         name='get_umbrellas_for_repair'),
+    path('get_umbrellas_for_repair/', views.get_umbrellas_for_repair, name='get_umbrellas_for_repair'),
+
+    path('get_repair_notes/<int:umbrella_id>', views.get_repair_notes, name='get_repair_notes'),
+    path('get_repair_notes/', views.get_repair_notes, name='get_repair_notes'),
+
+    path('add_comment/<int:diary_id>/', views.add_comment, name='add_comment'),
+
+    path("repair_umbrella/", views.repair_umbrella),
 
     # 放置伞
     path("place_umbrella/", views.place_umbrella),
@@ -61,6 +77,11 @@ urlpatterns = [
 
     # 随机数据
     path("random/", views.ran),
+
+    # 找空位置
+    path('get_empty_positions/<int:site_id>/', views.get_empty_positions, name='get_empty_positions'),
+
+    path('get_free_positions/<str:site_id>/', views.get_free_positions, name='get_free_positions'),
 
     # 重置密码
     path('reset_password/',
@@ -78,6 +99,9 @@ urlpatterns = [
     path('reset_password_complete/',
          auth_views.PasswordResetCompleteView.as_view(template_name='password_reset_done.html'),
          name='password_reset_complete'),
+
+    # path('api/user/login', api.user_login, name='用户登录')
+
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
