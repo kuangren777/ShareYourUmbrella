@@ -176,7 +176,25 @@
                                         <td>{{ item.position }}</td>
                                         <td>
                                             <a class="btn btn-primary btn-sm" data-bs-toggle="modal"
-                                               data-bs-target="#umbrella_detail{{ item.id }}">详情</a>
+                                               data-bs-target="#umbrella_detail{{ item.umbrella.umbrella_id }}">详情</a>
+                                            {% if item.umbrella.umbrella_scrapped %}
+                                                <a class="btn btn-dark btn-sm" data-bs-toggle="modal"
+                                                   data-bs-target="#umbrella_scrapped{{ item.umbrella.umbrella_id }}">报废</a>
+                                            {% elif item.is_in_repair %}
+                                                <a class="btn btn-outline-danger btn-sm" data-bs-toggle="modal"
+                                                   data-bs-target="#umbrella_repair{{ item.umbrella.umbrella_id }}">维修</a>
+                                                <a class="btn btn-primary btn-sm" data-bs-toggle="modal"
+                                                   data-bs-target="#umbrella_detail{{ item.umbrella.umbrella_id }}">调度</a>
+                                            {% else %}
+                                                <a class="btn btn-primary btn-sm" data-bs-toggle="modal"
+                                                   data-bs-target="#report_repair{{ item.umbrella.umbrella_id }}">报修</a>
+                                                <a class="btn btn-primary btn-sm" data-bs-toggle="modal"
+                                                   data-bs-target="#umbrella_detail{{ item.umbrella.umbrella_id }}">调度</a>
+                                            {% endif %}
+                                            <a class="btn btn-primary btn-sm" data-bs-toggle="modal"
+                                               data-bs-target="#umbrella_detail{{ item.umbrella.umbrella_id }}">历史评价</a>
+                                            <a class="btn btn-primary btn-sm" data-bs-toggle="modal"
+                                               data-bs-target="#umbrella_detail{{ item.umbrella.umbrella_id }}">历史订单</a>
                                         </td>
                                     </tr>
                                 {% endfor %}
@@ -262,6 +280,7 @@
                 </div>
             </div>
         </div>
+
         <br>
 
         {#            <div class="row">#}
@@ -532,32 +551,55 @@
             </div>
         {% endfor %}
 
-        {% for umbrella in Umbrella_list %}
-            <div class="modal fade" id="umbrella_detail{{ umbrella.id }}" tabindex="-1"
+        {% for item in Umbrella_list_with_positions %}
+            <div class="modal fade" id="umbrella_detail{{ item.umbrella.umbrella_id }}" tabindex="-1"
                  aria-labelledby="exampleModalLabel"
                  aria-hidden="true">
                 <div class="modal-dialog">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h3 class="modal-title fs-5" id="exampleModalLabel">{{ umbrella }}详情</h3>
+                            <h3 class="modal-title fs-5" id="exampleModalLabel">{{ item.umbrella }}详情</h3>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"
                                     aria-label="Close"></button>
                         </div>
 
                         <div class="modal-body">
                             <div class="container-sm col-md">
-                                {% if umbrella.site_id %}
-                                    <h5>
-                                        它正位于{{ umbrella.place.name }}的{{ umbrella.umbrella_place_id }}号位置上等您~</h5>
-                                {% else %}
-                                    <h5>此伞已被借出~</h5>
-                                {% endif %}
+                                位置：{{ item.position }}
                             </div>
                         </div>
 
                         <div class="modal-footer">
-                            <a type="button" class="btn btn-secondary" data-bs-dismiss="modal"">
-                            确定
+                            <a type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                确定
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+
+        {% for item in Umbrella_list_with_positions %}
+            <div class="modal fade" id="umbrella_scrapped{{ item.umbrella.umbrella_id }}" tabindex="-1"
+                 aria-labelledby="exampleModalLabel"
+                 aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3 class="modal-title fs-5" id="exampleModalLabel">{{ item.umbrella }}已报废</h3>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                    aria-label="Close"></button>
+                        </div>
+
+                        <div class="modal-body">
+                            <div class="container-sm col-md">
+                                该伞已报废，不可维修与调度。
+                            </div>
+                        </div>
+
+                        <div class="modal-footer">
+                            <a type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                确定
                             </a>
                         </div>
                     </div>
@@ -618,6 +660,91 @@
 
     </div>
 
+    {% for item in Umbrella_list_with_positions %}
+        <div class="modal fade" id="report_repair{{ item.umbrella.umbrella_id }}" tabindex="-1"
+             aria-labelledby="exampleModalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 class="modal-title fs-5" id="exampleModalLabel">{{ item.umbrella }}报修</h3>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                aria-label="Close"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <!-- 报修表单 -->
+                        <form method="post" action="/report-repair/{{ item.umbrella.umbrella_id }}/">
+                            {% csrf_token %}
+                            <input type="hidden" name="umbrella_id" value="{{ item.umbrella.umbrella_id }}">
+                            <label for="repair_type_id{{ item.umbrella.umbrella_id }}">维修类型：</label>
+                            <select id="repair_type_id{{ item.umbrella.umbrella_id }}" name="repair_type_id"
+                                    class="form-select">
+                                {% for type in repair_types %}
+                                    <option value="{{ type.repair_type_id }}">{{ type }}</option>
+                                {% endfor %}
+                            </select>
+                            <label for="notes">备注：</label>
+                            <textarea id="notes" name="notes" class="form-control"></textarea>
+                            <button type="submit" class="btn btn-primary mt-2">提交报修</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+
+    {% for item in Umbrella_list_with_positions %}
+        <div class="modal fade" id="umbrella_repair{{ item.umbrella.umbrella_id }}" tabindex="-1"
+             aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <!-- 模态框头部 -->
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">维修详情 - {{ item.umbrella }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <!-- 模态框主体 -->
+                    <div class="modal-body">
+                        <!-- 表单，直接硬编码URL -->
+                        <form method="post" action="/update-repair/{{ item.umbrella.umbrella_id }}/">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="repair_type_{{ item.umbrella.umbrella_id }}"
+                                       class="form-label">维修类型</label>
+                                <select class="form-select" id="repair_type_{{ item.umbrella.umbrella_id }}"
+                                        name="repair_type_id">
+                                    {% for type in repair_types %}
+                                        <option value="{{ type.repair_type_id }}"
+                                                {% if item.latest_repair and type.repair_type_id == item.latest_repair.repair_type_id.repair_type_id %}
+                                                selected {% endif %}>
+                                            {{ type.repair_type_id }}. {{ type.repair_type }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="notes_{{ item.umbrella.umbrella_id }}" class="form-label">备注</label>
+                                <textarea class="form-control" id="notes_{{ item.umbrella.umbrella_id }}"
+                                          name="notes">{{ item.latest_repair.notes }}</textarea>
+                            </div>
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input"
+                                       id="completed_{{ item.umbrella.umbrella_id }}" name="completed">
+                                <label class="form-check-label"
+                                       for="completed_{{ item.umbrella.umbrella_id }}">维修完成，不勾选则报废</label>
+                            </div>
+                            <button type="submit" class="btn btn-primary">更新维修信息</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+
+
+
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         $(document).ready(function () {
@@ -664,11 +791,6 @@
             });
         });
     </script>
-
-
-
-
-
 
 
 {% endblock %}

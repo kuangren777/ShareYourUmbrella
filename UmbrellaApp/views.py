@@ -7,6 +7,8 @@ from django.contrib.auth.decorators import login_required
 # from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.shortcuts import render, redirect, HttpResponse, get_object_or_404
 
+from django.views.decorators.http import require_POST
+
 from django.db.models import F, Value, Count
 from django.db.models import IntegerField
 from django.db.models import ExpressionWrapper
@@ -125,6 +127,10 @@ def test(request):
     # 获取雨伞列表和相关的站点存放信息
     umbrella_list_with_positions = []
     for umbrella in Umbrella.objects.select_related('umbrella_type_id').all().order_by('umbrella_id'):
+        latest_repair = Repair.objects.filter(umbrella_id=umbrella.umbrella_id, repair_time=None).first()
+        latest_repair = latest_repair if latest_repair else None
+        # print(umbrella.latest_repair.notes)
+
         site_storage = SiteStorage.objects.filter(umbrella_id=umbrella).first()
         if site_storage:
             position = f"{site_storage.site_id} - {site_storage.lay_id}"
@@ -137,20 +143,28 @@ def test(request):
         is_rented = Diary.objects.filter(umbrella_id=umbrella, return_time__isnull=True).exists()
         is_in_storage = SiteStorage.objects.filter(umbrella_id=umbrella).exists()
 
-        if is_alarm:
+        if umbrella.umbrella_scrapped:
+            status = "已报废"
+        elif is_alarm:
             status = "警报中"
         elif is_in_repair:
             status = "待维修"
         elif is_rented:
             status = "占用"
-        elif is_in_storage and umbrella.umbrella_available:
+        elif is_in_storage and umbrella.umbrella_available and not umbrella.umbrella_scrapped:
             status = "可用"
+        elif not is_in_storage:
+            status = "未放置"
 
         umbrella_list_with_positions.append({
             'umbrella': umbrella,
             'position': position,
             'status': status,
-            'is_alarm': is_alarm
+            'is_alarm': is_alarm,
+            'is_in_repair': is_in_repair,
+            'is_rented': is_rented,
+            'is_in_storage': is_in_storage,
+            'latest_repair': latest_repair,
         })
 
     log_list = Diary.objects.annotate(
@@ -623,6 +637,7 @@ def repair_umbrella(request):
                 repair.notes += " 已报废。"
                 repair.umbrella_id.umbrella_scrapped = True
                 repair.umbrella_id.save()
+                remove_umbrella_from_storage(umbrella_id)
             repair.save()
             return redirect('/')  # 重定向到合适的页面
         # 如果表单无效，重新渲染表单
@@ -661,7 +676,6 @@ def get_repair_notes(request, umbrella_id=None):
             return JsonResponse({'notes': repair.notes})
         except Repair.DoesNotExist:
             return JsonResponse({'notes': '没有找到对应的备注信息。'})
-
 
 
 @login_required(login_url='/login/')
@@ -798,6 +812,70 @@ def get_free_positions(request, site_id):
 
     # 返回空闲位置的列表
     return JsonResponse({'free_positions': free_positions_list})
+
+
+@login_required(login_url='/login/')
+def report_repair(request, umbrella_id):
+    repair_types = RepairType.objects.all()
+    if request.method == 'POST':
+        form = ReportRepairUmbrellaForm(request.POST)
+        if form.is_valid():
+            repair = form.save(commit=False)
+            # 设置repair_time为None表示等待维修
+            repair.repair_time = None
+            repair.save()
+            # 重定向到适当的页面
+            return redirect('/')
+    else:
+        form = ReportRepairUmbrellaForm()
+    return redirect('/')
+
+
+@require_POST
+def update_repair(request, umbrella_id):
+    # 获取对应的伞对象
+    umbrella = get_object_or_404(Umbrella, pk=umbrella_id)
+    latest_repair = Repair.objects.filter(umbrella_id=umbrella).last()
+
+    # 读取表单数据
+    repair_type_id = request.POST.get('repair_type_id')
+    notes = request.POST.get('notes')
+    completed = request.POST.get('completed') == 'on'
+    print(completed)
+
+    if completed:
+        # 如果勾选了维修完成
+        Repair.objects.update_or_create(
+            umbrella_id=umbrella,
+            defaults={
+                'repair_type_id': RepairType.objects.filter(pk=repair_type_id).first(),
+                'notes': notes,
+                'repair_time': timezone.now()
+            }
+        )
+    else:
+        # 如果没有勾选维修完成，处理为报废
+
+        if latest_repair:
+            latest_repair.notes = notes + " 已报废。"
+            latest_repair.save()
+            remove_umbrella_from_storage(umbrella_id)
+        umbrella.umbrella_scrapped = True
+        umbrella.save()
+
+    # 重定向到适当的页面
+    return redirect('/')
+
+
+def remove_umbrella_from_storage(umbrella_id):
+    # 使用filter来找到所有与该伞相关的存放记录
+    storage_records = SiteStorage.objects.filter(umbrella_id=umbrella_id)
+
+    # 检查是否找到了记录
+    if storage_records.exists():
+        # 如果找到了记录，则删除它们
+        storage_records.delete()
+    # 如果没有找到记录，不需要执行任何操作
 
 
 def ran(request):

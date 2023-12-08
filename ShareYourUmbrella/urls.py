@@ -50,6 +50,10 @@ urlpatterns = [
     # 入库伞
     path("import_umbrella/", views.import_umbrella),
     path("report_repair_umbrella/", views.report_repair_umbrella),
+    # path('report-repair/', views.report_repair, name='report-repair'),
+    path('report-repair/<int:umbrella_id>/', views.report_repair, name='report-repair'),
+    path('update-repair/<int:umbrella_id>/', views.update_repair, name='update-repair'),
+
     # path("get_pending_repairs/", views.get_pending_repairs),
     # path('get_umbrellas_for_repair/<int:repair_type_id>/', views.get_umbrellas_for_repair,
     #      name='get_umbrellas_for_repair'),

@@ -128,7 +128,6 @@ class RepairType(models.Model):
         verbose_name_plural = verbose_name
 
     def __str__(self):
-        # 假设您有一个字段用于描述维修类型，例如 'repair_type_name'
         return str(self.repair_type_id) + '.' + self.repair_type
 
 
