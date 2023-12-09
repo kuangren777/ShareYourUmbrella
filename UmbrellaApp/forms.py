@@ -299,17 +299,17 @@ class ImportUmbrellaForm(forms.ModelForm):
 
 class PlaceUmbrella(forms.ModelForm):
     class Meta:
-        model = Umbrella
+        model = SiteStorage
         # fields = ['umbrella_available', 'site_id']  # 更新字段
-        fields = ['umbrella_available']  # 更新字段
+        fields = ['site_id']  # 更新字段
 
         labels = {
-            'umbrella_available': '可用性',
+            'site_id': '放置地点',
             # 'site_id': '放置地点',
         }
 
         widgets = {
-            'umbrella_available': forms.CheckboxInput(attrs={'class': 'form-check'}),
+            'site_id': forms.Select(attrs={'class': 'form-select'}),
             # 'site_id': forms.Select(attrs={'class': 'form-select'}),
         }
 

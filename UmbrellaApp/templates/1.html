@@ -80,8 +80,8 @@
                                         <input type="submit" name="option" value="删除用户" class="btn btn-warning">
                                     </div>
                                     {% if msg %}
-                                        <a>点此查看详情<a class="btn btn-primary" data-bs-toggle="modal"
-                                                          data-bs-target="#user_detail">查看</a></a>
+                                        <a>点此查看详情<a class="btn btn-primary btn-sm" data-bs-toggle="modal"
+                                                          data-bs-target="#select_user_detail">查看</a></a>
                                     {% endif %}
                                 </div>
                                 <br>
@@ -104,7 +104,7 @@
                                         <tr>
                                             <td>
                                                 <input class="form-check-input" type="checkbox" name="user"
-                                                       value="{{ item.id }}">
+                                                       value="{{ item.user_id }}">
                                             </td>
                                             <td>{{ item.user_id }}</td>
                                             <td>{{ item.user_real_name }}</td>
@@ -183,18 +183,21 @@
                                             {% elif item.is_in_repair %}
                                                 <a class="btn btn-outline-danger btn-sm" data-bs-toggle="modal"
                                                    data-bs-target="#umbrella_repair{{ item.umbrella.umbrella_id }}">维修</a>
+                                                <!-- 调度按钮 -->
                                                 <a class="btn btn-primary btn-sm" data-bs-toggle="modal"
-                                                   data-bs-target="#umbrella_detail{{ item.umbrella.umbrella_id }}">调度</a>
+                                                   data-bs-target="#umbrella_dispatch{{ item.umbrella.umbrella_id }}">调度</a>
                                             {% else %}
                                                 <a class="btn btn-primary btn-sm" data-bs-toggle="modal"
                                                    data-bs-target="#report_repair{{ item.umbrella.umbrella_id }}">报修</a>
                                                 <a class="btn btn-primary btn-sm" data-bs-toggle="modal"
-                                                   data-bs-target="#umbrella_detail{{ item.umbrella.umbrella_id }}">调度</a>
+                                                   data-bs-target="#umbrella_dispatch{{ item.umbrella.umbrella_id }}">调度</a>
                                             {% endif %}
+                                            <!-- 历史评价按钮 -->
                                             <a class="btn btn-primary btn-sm" data-bs-toggle="modal"
-                                               data-bs-target="#umbrella_detail{{ item.umbrella.umbrella_id }}">历史评价</a>
+                                               data-bs-target="#umbrella_comment{{ item.umbrella.umbrella_id }}">历史评价</a>
+                                            <!-- 历史订单按钮 -->
                                             <a class="btn btn-primary btn-sm" data-bs-toggle="modal"
-                                               data-bs-target="#umbrella_detail{{ item.umbrella.umbrella_id }}">历史订单</a>
+                                               data-bs-target="#dairy_detail{{ item.umbrella.umbrella_id }}">历史订单</a>
                                         </td>
                                     </tr>
                                 {% endfor %}
@@ -248,7 +251,7 @@
                         <hr>
                         <div class="card card-body">
                             <a class="btn btn-primary btn-sm btn-block" data-bs-toggle="modal"
-                               data-bs-target="#place_umbrella">放置伞</a>
+                               data-bs-target="#place_multi_umbrella">批量放置伞</a>
                             <table class="table table-sm">
                                 <tr>
                                     <th>编号</th>
@@ -443,46 +446,48 @@
             </div>
         </div>
 
-
-        <div class="modal fade" id="place_umbrella" tabindex="-1" aria-labelledby="exampleModalLabel"
+        <!-- 批量放置伞模态框 -->
+        <div class="modal fade" id="place_multi_umbrella" tabindex="-1" aria-labelledby="exampleModalLabel"
              aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h1 class="modal-title fs-5" id="exampleModalLabel">放置伞</h1>
+                        <h1 class="modal-title fs-5" id="exampleModalLabel">批量放置伞</h1>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <div class="modal-body">
-                        <form method="POST" action="/place_umbrella/">
-                            {% csrf_token %}
-                            <input hidden="true" name="user" value="{{ request.user.username }}">
-
+                    <form method="POST" action="/place_umbrella/">
+                        {% csrf_token %}
+                        <div class="modal-body">
                             <div class="mb-3">
-                                <label for="recipient-name" class="col-form-label">伞起始编号：</label>
-                                <input class="form-control" name="start">
+                                <label for="start-umbrella-id" class="col-form-label">伞起始编号：</label>
+                                <input type="number" class="form-control" name="start" id="start-umbrella-id">
                             </div>
 
                             <div class="mb-3">
-                                <label for="recipient-name" class="col-form-label">伞结束编号：</label>
-                                <input class="form-control" name="end">
+                                <label for="end-umbrella-id" class="col-form-label">伞结束编号：</label>
+                                <input type="number" class="form-control" name="end" id="end-umbrella-id">
                             </div>
 
                             <div class="mb-3">
-                                <label for="recipient-name" class="col-form-label">放置地点:</label>
-                                {{ place_umbrella.place }}
+                                <label for="site-select" class="col-form-label">放置地点:</label>
+                                <select class="form-select" name="place" id="site-select">
+                                    <option value="">选择站点</option>
+                                    {% for site in location_list %}
+                                        <option value="{{ site.site_id }}">{{ site.site_id }}. {{ site.site_address }}</option>
+                                    {% endfor %}
+                                </select>
                             </div>
+                        </div>
 
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭
-                                </button>
-                                <input type="submit" class="btn btn-primary" value="确认">
-                            </div>
-                        </form>
-
-                    </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                            <input type="submit" class="btn btn-primary" value="确认">
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
+
 
         {% for place in pls %}
             <div class="modal fade modal-lg" id="place{{ place.id }}" tabindex="-1"
@@ -608,21 +613,17 @@
         {% endfor %}
 
         {% if msg %}
-            {% for user in msg %}
-                <div class="modal fade" id="user_detail" tabindex="-1"
-                     aria-labelledby="exampleModalLabel"
-                     aria-hidden="true">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h3 class="modal-title fs-5" id="exampleModalLabel">借伞详情</h3>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                        aria-label="Close"></button>
-                            </div>
-                            <h3>
-                                &nbsp;&nbsp;{{ user.username }}：
-                            </h3>
-                            <div class="modal-body">
+            <div class="modal fade" id="select_user_detail" tabindex="-1" aria-labelledby="exampleModalLabel"
+                 aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3 class="modal-title fs-5" id="exampleModalLabel">借伞详情</h3>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            {% for user in msg %}
+                                <h3>{{ user.username }}：</h3>
                                 <table>
                                     <thead>
                                     <tr>
@@ -637,7 +638,7 @@
                                     {% for log in user.detail %}
                                         <tr>
                                             <td>{{ log.umbrella_id }}</td>
-                                            <td>{{ log.borrow_time|date:"Y-m-d" }}</td>
+                                            <td>{{ log.lending_time|date:"Y-m-d" }}</td>
                                             <td>{{ log.lending_site_id }}</td>
                                             <td>{{ log.return_time|date:"Y-m-d" }}</td>
                                             <td>{{ log.return_site_id }}</td>
@@ -645,18 +646,16 @@
                                     {% endfor %}
                                     </tbody>
                                 </table>
-                            </div>
-
-                            <div class="modal-footer">
-                                <a type="button" class="btn btn-secondary" data-bs-dismiss="modal"">
-                                确定
-                                </a>
-                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="modal-footer">
+                            <a type="button" class="btn btn-secondary" data-bs-dismiss="modal">确定</a>
                         </div>
                     </div>
                 </div>
-            {% endfor %}
+            </div>
         {% endif %}
+
 
     </div>
 
@@ -742,7 +741,159 @@
         </div>
     {% endfor %}
 
+    <!-- 伞调度模态框 -->
+    {% for item in Umbrella_list_with_positions %}
+        <!-- 模态框 -->
+        <div class="modal fade" id="umbrella_dispatch{{ item.umbrella.umbrella_id }}" tabindex="-1"
+             aria-labelledby="dispatchModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="dispatchModalLabel">伞调度 - {{ item.umbrella }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form method="post" action="/umbrella-dispatch/{{ item.umbrella.umbrella_id }}/">
+                            {% csrf_token %}
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input"
+                                       id="no_dispatch_{{ item.umbrella.umbrella_id }}"
+                                       onchange="toggleDispatchDetails('{{ item.umbrella.umbrella_id }}')">
+                                <label class="form-check-label"
+                                       for="no_dispatch_{{ item.umbrella.umbrella_id }}">不放置伞</label>
+                            </div>
+                            <div id="dispatch_details_{{ item.umbrella.umbrella_id }}">
+                                <div class="mb-3">
+                                    <label for="site_id_{{ item.umbrella.umbrella_id }}" class="form-label">站点</label>
+                                    <select class="form-select" id="site_id_{{ item.umbrella.umbrella_id }}"
+                                            name="site_id"
+                                            onchange="updateLayIdOptions('{{ item.umbrella.umbrella_id }}', this.value)">
+                                        <option value="">选择站点</option>
+                                        {% for site in location_list %}
+                                            <option value="{{ site.site_id }}">{{ site.site_id }}. {{ site.site_address }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="lay_id_{{ item.umbrella.umbrella_id }}"
+                                           class="form-label">放置序号</label>
+                                    <select class="form-select" id="lay_id_{{ item.umbrella.umbrella_id }}"
+                                            name="lay_id">
+                                        <!-- 选项将通过JavaScript动态加载 -->
+                                    </select>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">提交调度</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
 
+    {% for item in Umbrella_list_with_positions %}
+        <!-- 模态框 -->
+        <div class="modal fade" id="umbrella_comment{{ item.umbrella.umbrella_id }}" tabindex="-1"
+             aria-labelledby="commentModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="commentModalLabel">伞{{ item.umbrella }}的历史评价</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        {% if item.comments %}
+                            {% for comment in item.comments %}
+                                <p><strong>评分：</strong>{{ comment.comment_score }} / 时间：{{ comment.comment_time }}
+                                </p>
+                                <p>评价内容：{{ comment.comment_content }}</p>
+                                <hr>
+                            {% endfor %}
+                        {% else %}
+                            <p>没有历史评价。</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+
+    {% for item in Umbrella_list_with_positions %}
+        <!-- 模态框 -->
+        <div class="modal fade" id="dairy_detail{{ item.umbrella.umbrella_id }}" tabindex="-1"
+             aria-labelledby="orderModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="orderModalLabel">伞{{ item.umbrella.umbrella_id }}的历史订单</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        {% if item.diaries %}
+                            {% for diary in item.diaries %}
+                                <div class="mb-2">
+                                    <p><strong>借出站点：</strong>{{ diary.lending_site_id.site_address }} /
+                                        序号：{{ diary.lending_lay_id }}</p>
+                                    <p><strong>归还站点：</strong>
+                                        {% if diary.return_site_id %}
+                                            {{ diary.return_site_id.site_address }}
+                                        {% else %}
+                                            未归还
+                                        {% endif %}
+                                        / 序号：
+                                        {% if diary.return_lay_id %}
+                                            {{ diary.return_lay_id }}
+                                        {% else %}
+                                            未归还
+                                        {% endif %}
+                                    </p>
+                                    <p><strong>借出时间：</strong>{{ diary.lending_time }} </p>
+                                    <p><strong>归还时间：</strong>
+                                        {% if diary.return_time %}
+                                            {{ diary.return_time }}
+                                        {% else %}
+                                            未归还
+                                        {% endif %}
+                                    </p>
+                                    <p><strong>费用：</strong>{{ diary.order_price }}</p>
+                                </div>
+                                <hr>
+                            {% endfor %}
+                        {% else %}
+                            <p>没有历史订单。</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+
+
+
+    <script>
+        function toggleDispatchDetails(umbrellaId) {
+            var checkBox = document.getElementById("no_dispatch_" + umbrellaId);
+            var dispatchDetails = document.getElementById("dispatch_details_" + umbrellaId);
+            dispatchDetails.style.display = checkBox.checked ? "none" : "block";
+        }
+
+        function updateLayIdOptions(umbrellaId, siteId) {
+            if (siteId) {
+                fetch(`/get_free_positions/${siteId}/`)
+                    .then(response => response.json())
+                    .then(data => {
+                        var layIdSelect = document.getElementById('lay_id_' + umbrellaId);
+                        layIdSelect.innerHTML = ''; // 清空现有选项
+                        data.free_positions.forEach(function (layId) {
+                            layIdSelect.options[layIdSelect.options.length] = new Option(layId, layId);
+                        });
+                    })
+                    .catch(error => console.error('Error:', error));
+            } else {
+                document.getElementById('lay_id_' + umbrellaId).innerHTML = ''; // 如果没有站点ID，则清空放置序号的选项
+            }
+        }
+    </script>
 
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>

@@ -39,7 +39,7 @@ class Site(models.Model):
 class Umbrella(models.Model):
     umbrella_id = models.AutoField(primary_key=True, verbose_name="伞ID")
     umbrella_warehousing_date = models.DateTimeField(verbose_name="入库日期")
-    umbrella_available = models.BooleanField(verbose_name="是否可用")
+    # umbrella_available = models.BooleanField(verbose_name="是否可用")
     umbrella_type_id = models.ForeignKey(UmbrellaType, on_delete=models.SET_NULL, verbose_name="伞类型", null=True)
     umbrella_last_used_date = models.DateTimeField(verbose_name="上次使用日期", null=True, blank=True)
     umbrella_cost_price = models.FloatField(verbose_name="伞成本价")

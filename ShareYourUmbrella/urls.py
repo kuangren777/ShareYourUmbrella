@@ -54,6 +54,9 @@ urlpatterns = [
     path('report-repair/<int:umbrella_id>/', views.report_repair, name='report-repair'),
     path('update-repair/<int:umbrella_id>/', views.update_repair, name='update-repair'),
 
+    # 伞调度
+    path('umbrella-dispatch/<int:umbrella_id>/', views.umbrella_dispatch, name='umbrella_dispatch'),
+
     # path("get_pending_repairs/", views.get_pending_repairs),
     # path('get_umbrellas_for_repair/<int:repair_type_id>/', views.get_umbrellas_for_repair,
     #      name='get_umbrellas_for_repair'),

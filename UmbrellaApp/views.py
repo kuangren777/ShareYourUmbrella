@@ -104,22 +104,26 @@ def test(request):
 
     msg = False
     if request.method == "POST":
-        # print(request.POST)
         user_id = request.POST.getlist('user')
         option = request.POST.get('option')
+        print(user_id)
         if option == '查看信息':
             msg = []
             for i in user_id:
-                temp = msg_user()
-                user = User.objects.filter(id=i).first()
-                temp.username = user.username
-                temp.user_id = user.user_id
-                temp.detail = Diary.objects.filter(user_id=user.user_id).order_by('lending_time')
-                msg.append(temp)
+                if i:  # 确保i不为空
+                    print(f'i:{i}')
+                    temp = msg_user()
+                    user = User.objects.filter(user_id=i).first()
+                    if user:  # 确保查询到了用户
+                        temp.username = user.username
+                        temp.user_id = user.user_id
+                        temp.detail = Diary.objects.filter(user_id=user.user_id).order_by('lending_time')
+                        msg.append(temp)
+                        # print(msg)
 
         elif option == '删除用户':
             for i in user_id:
-                User.objects.filter(id=i).delete()
+                User.objects.filter(user_id=i).delete()
     # User.objects.create(username='dusadsasidj', name='kuaddden78', userid=1256166, password="129a456", phone="15694954999")
 
     User_list = User.objects.all().order_by('-user_last_login_date')
@@ -129,6 +133,8 @@ def test(request):
     for umbrella in Umbrella.objects.select_related('umbrella_type_id').all().order_by('umbrella_id'):
         latest_repair = Repair.objects.filter(umbrella_id=umbrella.umbrella_id, repair_time=None).first()
         latest_repair = latest_repair if latest_repair else None
+        comments = Comment.objects.filter(umbrella_id=umbrella).order_by('-comment_time')
+        diaries = Diary.objects.filter(umbrella_id=umbrella).order_by('-lending_time')
         # print(umbrella.latest_repair.notes)
 
         site_storage = SiteStorage.objects.filter(umbrella_id=umbrella).first()
@@ -151,7 +157,7 @@ def test(request):
             status = "待维修"
         elif is_rented:
             status = "占用"
-        elif is_in_storage and umbrella.umbrella_available and not umbrella.umbrella_scrapped:
+        elif is_in_storage and not umbrella.umbrella_scrapped:
             status = "可用"
         elif not is_in_storage:
             status = "未放置"
@@ -165,6 +171,8 @@ def test(request):
             'is_rented': is_rented,
             'is_in_storage': is_in_storage,
             'latest_repair': latest_repair,
+            'comments': comments,
+            'diaries': diaries,
         })
 
     log_list = Diary.objects.annotate(
@@ -250,6 +258,14 @@ def test(request):
     repair_umbrella_form = RepairUmbrellaForm()
     repair_types = RepairType.objects.all()
 
+    umbrella_comments = {}
+
+    for umbrella in umbrella_list_with_positions:
+        comments = Comment.objects.filter(umbrella_id=umbrella['umbrella']).order_by('-comment_time')
+        umbrella_comments[umbrella['umbrella'].umbrella_id] = comments
+
+
+
     context = {
         "UserInfo_list": User_list,
         "Umbrella_list_with_positions": umbrella_list_with_positions,
@@ -269,6 +285,7 @@ def test(request):
         "ReportRepairUmbrellaForm": report_repair_umbrella_form,
         "RepairUmbrellaForm": repair_umbrella_form,
         "repair_types": repair_types,
+        'umbrella_comments': umbrella_comments,
     }
     return render(request, "1.html", context)
 
@@ -408,7 +425,7 @@ def creat_order_borrow(request):
             lay_id=req_lay_id
         ).first()
 
-        if site_storage and site_storage.umbrella_id and site_storage.umbrella_id.umbrella_available:
+        if site_storage and site_storage.umbrella_id:
             umbrella = site_storage.umbrella_id
 
             if user.user_umbrella_id is None:
@@ -422,8 +439,10 @@ def creat_order_borrow(request):
                     order_price=0.00  # 假设初始费用为0
                 )
 
+                umbrella.umbrella_last_used_date = timezone.now()
+
                 # 更新伞的可用状态
-                umbrella.umbrella_available = False
+                # umbrella.umbrella_available = False
                 umbrella.save()
 
                 # 更新用户的当前伞
@@ -550,8 +569,8 @@ def creat_order_back(request):
                 user.save()
 
                 # 更新伞的可用性和位置
-                umbrella.umbrella_available = True
-                umbrella.save()
+                # umbrella.umbrella_available = True
+                # umbrella.save()
 
                 # 更新 SiteStorage 表中的数据
                 # SiteStorage.objects.create(site_id=return_site, lay_id=req_return_lay_id, umbrella_id=umbrella)
@@ -580,8 +599,8 @@ def import_umbrella(request):
 
         for i in range(n):
             Umbrella.objects.create(
-                umbrella_warehousing_date=datetime.datetime.now(),  # 设置当前时间为入库日期
-                umbrella_available=False,  # 新伞默认设置为不可用
+                umbrella_warehousing_date=timezone.now(),  # 设置当前时间为入库日期
+                # umbrella_available=False,  # 新伞默认设置为不可用
                 umbrella_type_id=tp,  # 设置伞类型
                 umbrella_cost_price=price  # 设置伞成本价
             )
@@ -681,35 +700,39 @@ def get_repair_notes(request, umbrella_id=None):
 @login_required(login_url='/login/')
 def place_umbrella(request):
     if request.method == "POST":
-        # print(request.POST)
         start = request.POST.get('start')
         end = request.POST.get('end')
+        site_id = request.POST.get('place')
+
+        print(site_id)
         if not (start.isdigit() and end.isdigit()):
             messages.info(request, '请输入数字')
             return redirect('/')
+
         start = int(start)
         end = int(end)
-        place = request.POST.get('place')
-        place_name = Site.objects.filter(id=request.POST.get('place')).first().name
-        now = 0
-        flag = False
-        for i in range(min(start, end), max(start, end) + 1):
-            if Umbrella.objects.filter(place=place, id=i).first():
-                messages.info(request, f'第{i}号伞已经在{place_name}啦~')
-            else:
-                while Umbrella.objects.filter(place=place, umbrella_place_id=now).first():
-                    now += 1
-                    if now == 25:
-                        messages.info(request, '此处已放满，请重新放置')
-                        flag = True
+        umbrellas = Umbrella.objects.filter(umbrella_id__range=(min(start, end), max(start, end)))
+        site = Site.objects.filter(site_id=site_id).first()
 
-                if flag:
-                    break
+        if not site:
+            messages.info(request, '站点不存在')
+            return redirect('/')
+
+        for umbrella in umbrellas:
+            if SiteStorage.objects.filter(umbrella_id=umbrella).exists():
+                messages.info(request, f'伞编号 {umbrella.umbrella_id} 已经在其他站点放置')
+            else:
+                free_position = SiteStorage.objects.filter(site_id=site, umbrella_id__isnull=True).first()
+                if free_position:
+                    free_position.umbrella_id = umbrella
+                    free_position.save()
                 else:
-                    Umbrella.objects.filter(id=i).update(can_use=True, place=place, umbrella_place_id=now)
+                    messages.info(request, '此处已放满，请重新放置')
+                    break
 
         messages.info(request, '已成功放置~')
-        return redirect(f'/place_detail/{place}/')
+        return redirect(f'/')
+    return redirect('/')
 
 
 @login_required(login_url='/login/')
@@ -868,14 +891,42 @@ def update_repair(request, umbrella_id):
 
 
 def remove_umbrella_from_storage(umbrella_id):
-    # 使用filter来找到所有与该伞相关的存放记录
+    # 找到所有与该伞相关的存放记录
     storage_records = SiteStorage.objects.filter(umbrella_id=umbrella_id)
 
-    # 检查是否找到了记录
-    if storage_records.exists():
-        # 如果找到了记录，则删除它们
-        storage_records.delete()
-    # 如果没有找到记录，不需要执行任何操作
+    # 更新这些记录，将umbrella_id设置为null
+    storage_records.update(umbrella_id=None)
+
+
+@require_POST
+def umbrella_dispatch(request, umbrella_id):
+    # 获取伞对象
+    umbrella = get_object_or_404(Umbrella, pk=umbrella_id)
+
+    # 读取表单数据
+    site_id = request.POST.get('site_id')
+    lay_id = request.POST.get('lay_id')
+
+    if site_id:
+        # 获取或创建站点对象
+        site = get_object_or_404(Site, pk=site_id)
+
+        # 根据site_id和lay_id查找SiteStorage记录
+        site_storage, created = SiteStorage.objects.get_or_create(
+            site_id=site,
+            lay_id=lay_id,
+            defaults={'umbrella_id': umbrella}
+        )
+
+        # 如果记录已存在且未与此伞关联，则更新记录
+        if not created and site_storage.umbrella_id != umbrella:
+            site_storage.umbrella_id = umbrella
+            site_storage.save()
+    else:
+        # 如果没有选择站点，将与伞相关联的SiteStorage记录中的umbrella_id设置为null
+        SiteStorage.objects.filter(umbrella_id=umbrella).update(umbrella_id=None)
+
+    return redirect('/')
 
 
 def ran(request):
