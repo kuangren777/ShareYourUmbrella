@@ -1,4 +1,5 @@
 import datetime
+import json
 import random
 
 from django.contrib import messages
@@ -6,6 +7,9 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 # from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.shortcuts import render, redirect, HttpResponse, get_object_or_404
+
+from django.db.models.functions import TruncDay
+from django.db.models.functions import TruncMonth
 
 from django.views.decorators.http import require_POST
 
@@ -22,6 +26,8 @@ from django.http import JsonResponse, Http404
 from django.utils import timezone
 
 from decimal import Decimal
+
+from django.views.decorators.csrf import csrf_exempt
 
 
 def login_page(request):
@@ -128,6 +134,15 @@ def test(request):
 
     User_list = User.objects.all().order_by('-user_last_login_date')
 
+    for user in User_list:
+        user.coupons = Coupon.objects.filter(user_id=user).order_by('-expire_time')
+
+        alarms = Alarm.objects.filter(user_id=user.user_id, alarm_available=True).count()
+        user.alarms = alarms
+
+        alarm_details = Alarm.objects.filter(user_id=user.user_id, alarm_available=True)
+        user.alarm_details = alarm_details
+
     # 获取雨伞列表和相关的站点存放信息
     umbrella_list_with_positions = []
     for umbrella in Umbrella.objects.select_related('umbrella_type_id').all().order_by('umbrella_id'):
@@ -135,6 +150,9 @@ def test(request):
         latest_repair = latest_repair if latest_repair else None
         comments = Comment.objects.filter(umbrella_id=umbrella).order_by('-comment_time')
         diaries = Diary.objects.filter(umbrella_id=umbrella).order_by('-lending_time')
+        # 获取与该雨伞相关的警报
+        umbrella_alarm_details = Alarm.objects.filter(umbrella_id=umbrella.umbrella_id, alarm_available=True)
+        umbrella.umbrella_alarm_details = umbrella_alarm_details
         # print(umbrella.latest_repair.notes)
 
         site_storage = SiteStorage.objects.filter(umbrella_id=umbrella).first()
@@ -149,10 +167,10 @@ def test(request):
         is_rented = Diary.objects.filter(umbrella_id=umbrella, return_time__isnull=True).exists()
         is_in_storage = SiteStorage.objects.filter(umbrella_id=umbrella).exists()
 
-        if umbrella.umbrella_scrapped:
-            status = "已报废"
-        elif is_alarm:
+        if is_alarm:
             status = "警报中"
+        elif umbrella.umbrella_scrapped:
+            status = "已报废"
         elif is_in_repair:
             status = "待维修"
         elif is_rented:
@@ -198,6 +216,12 @@ def test(request):
     for loc in location_list:
         # 筛选与该站点关联的所有SiteStorage记录
         site_storage_records = SiteStorage.objects.filter(site_id=loc.site_id)
+
+        alarms = Alarm.objects.filter(site_id=loc.site_id, alarm_available=True).count()
+        loc.alarms = alarms
+
+        alarm_details = Alarm.objects.filter(site_id=loc.site_id, alarm_available=True)
+        loc.alarm_details = alarm_details
 
         # 初始化可用伞的数量
         loc.num = 0
@@ -264,7 +288,32 @@ def test(request):
         comments = Comment.objects.filter(umbrella_id=umbrella['umbrella']).order_by('-comment_time')
         umbrella_comments[umbrella['umbrella'].umbrella_id] = comments
 
+    umbrellas = Umbrella.objects.all()
+    umbrella_types = Umbrella.objects.values('umbrella_type_id__umbrella_type').distinct()
+    umbrella_counts = [
+        Umbrella.objects.filter(umbrella_type_id__umbrella_type=ut['umbrella_type_id__umbrella_type']).count() for ut in
+        umbrella_types]
 
+    users = User.objects.all()
+    user_names = [user.username for user in users]
+    # 将 Decimal 转换为 float
+    user_balances = [float(user.user_balance) for user in users]
+
+    sites = SiteStorage.objects.values('site_id').annotate(umbrella_count=Count('umbrella_id'))
+    site_ids = [site['site_id'] for site in sites]
+    umbrella_counts_11 = [site['umbrella_count'] for site in sites]
+
+    rental_history = Diary.objects.annotate(day=TruncDay('lending_time')).values('day').annotate(
+        count=Count('diary_id')).order_by('day')
+    dates = [entry['day'].strftime("%Y-%m-%d") for entry in rental_history]  # 转换为字符串
+    counts = [entry['count'] for entry in rental_history]
+
+    monthly_data = User.objects.annotate(month=TruncMonth('date_joined')).values('month').annotate(
+        count=Count('user_id')).order_by('month')
+    months = [data['month'].strftime("%Y-%m") for data in monthly_data]
+    counts_user = [data['count'] for data in monthly_data]
+
+    alarm_types = AlarmType.objects.all()
 
     context = {
         "UserInfo_list": User_list,
@@ -286,6 +335,17 @@ def test(request):
         "RepairUmbrellaForm": repair_umbrella_form,
         "repair_types": repair_types,
         'umbrella_comments': umbrella_comments,
+        'umbrella_types': [ut['umbrella_type_id__umbrella_type'] for ut in umbrella_types],
+        'umbrella_counts': umbrella_counts,
+        'user_names': user_names,
+        'user_balances': user_balances,
+        'site_ids': site_ids,
+        'umbrella_counts_11': umbrella_counts_11,
+        'dates': dates,
+        'counts': counts,
+        'months': months,
+        'counts_user': counts_user,
+        'alarm_types': alarm_types,
     }
     return render(request, "1.html", context)
 
@@ -330,6 +390,13 @@ def user(request, pk):
 
     order_form = OrderForm()
 
+    current_time = timezone.now()
+    coupons = Coupon.objects.filter(user_id=request.user, effective_time__lte=current_time,
+                                    expire_time__gte=current_time)
+
+    coupons_json = Coupon.objects.all()  # 获取所有优惠券数据
+    coupons_json = json.dumps(list(coupons.values('coupon_id', 'satisfied_amount', 'discount_price', 'coupon_type')))
+
     context = {
         "user": user,
         "user_logs": user_logs,
@@ -337,7 +404,9 @@ def user(request, pk):
         "my_filter": my_filter,
         "update_user_form": update_user_form,
         "change_password_form": change_password_form,
-        "order_form": order_form
+        "order_form": order_form,
+        'coupons': coupons,
+        'coupons_json': coupons_json,
     }
     return render(request, 'account.html', context)
 
@@ -813,7 +882,22 @@ def get_empty_positions(request, site_id):
     ).values_list('lay_id', 'umbrella_id')
 
     # 构建一个字典，包含位置和对应的伞号
-    positions_info = {lay_id: umbrella_id for lay_id, umbrella_id in positions_with_umbrellas}
+    positions_info = {}
+    for lay_id, umbrella_id in positions_with_umbrellas:
+        # 检查伞是否在维修状态
+        if Repair.objects.filter(umbrella_id=umbrella_id, repair_time__isnull=True).exists():
+            continue
+
+        # 检查伞是否有警报
+        if Alarm.objects.filter(umbrella_id=umbrella_id, alarm_available=True).exists():
+            continue
+
+        # 检查伞是否已经报废
+        umbrella = Umbrella.objects.get(pk=umbrella_id)
+        if umbrella.umbrella_scrapped:
+            continue
+
+        positions_info[lay_id] = umbrella_id
 
     return JsonResponse({'positions_info': positions_info})
 
@@ -927,6 +1011,153 @@ def umbrella_dispatch(request, umbrella_id):
         SiteStorage.objects.filter(umbrella_id=umbrella).update(umbrella_id=None)
 
     return redirect('/')
+
+
+@login_required
+def recharge_account(request):
+    if request.method == 'POST':
+        recharge_amount = Decimal(request.POST.get('recharge_amount', 0))
+        coupon_id = request.POST.get('coupon_id')
+
+        user = request.user
+
+        # 应用优惠券
+        if coupon_id:
+            coupon = get_object_or_404(Coupon, pk=coupon_id, user_id=user, coupon_available=True)
+            if coupon.coupon_type == '1' and recharge_amount >= coupon.satisfied_amount:
+                recharge_amount -= coupon.discount_price
+            elif coupon.coupon_type == '0' and recharge_amount >= coupon.satisfied_amount:
+                recharge_amount *= Decimal(1 - (coupon.discount_price / 100))
+
+            # 设置优惠券为已使用
+            coupon.coupon_available = False
+            coupon.save()
+
+        # 更新用户余额
+        user.user_balance += recharge_amount
+        user.save()
+
+        # 创建充值记录
+        Recharge.objects.create(
+            user_id=user,
+            recharge_time=timezone.now(),
+            recharge_amount=recharge_amount
+        )
+
+        return HttpResponse('充值成功！<a href="/">点击返回。</a>')
+
+    return redirect('/')
+
+
+@require_POST
+def add_coupon(request):
+    user_id = request.POST.get('user_id')
+    coupon_type = request.POST.get('coupon_type') == '1'
+    discount_price = request.POST.get('discount_price')
+    satisfied_amount = request.POST.get('satisfied_amount')
+    effective_time = request.POST.get('effective_time')
+    expire_time = request.POST.get('expire_time')
+
+    # 创建优惠券
+    Coupon.objects.create(
+        user_id_id=user_id,  # 注意外键字段的命名
+        coupon_type=coupon_type,
+        discount_price=discount_price,
+        satisfied_amount=satisfied_amount,
+        effective_time=timezone.make_aware(datetime.strptime(effective_time, '%Y-%m-%dT%H:%M')),
+        expire_time=timezone.make_aware(datetime.strptime(expire_time, '%Y-%m-%dT%H:%M')),
+        available=True
+    )
+
+    return redirect('/')
+
+
+def add_location_alarm(request):
+    if request.method == "POST":
+        site_id = request.POST.get('site_id')
+        alarm_type_id = request.POST.get('alarm_type')
+
+        site = Site.objects.filter(site_id=site_id).first()
+        alarm = AlarmType.objects.filter(alarm_type_id=alarm_type_id).first()
+
+        # 创建并保存新的警报对象
+        alarm = Alarm(site_id=site, alarm_type_id=alarm, alarm_available=True)
+        alarm.save()
+        # 重定向到相应页面
+        return redirect('/')
+
+    # 如果不是POST请求，显示表单
+    alarm_types = AlarmType.objects.all()
+    return redirect('/')
+
+
+@csrf_exempt
+def delete_location_alarm(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        alarm_id = data.get('alarm_id')
+        Alarm.objects.filter(alarm_id=alarm_id).delete()
+        return JsonResponse({'success': True})
+    return JsonResponse({'success': False})
+
+
+def add_user_alarm(request):
+    if request.method == 'POST':
+        user_id = request.POST.get('user_id')
+        alarm_type_id = request.POST.get('alarm_type')
+
+        alarm = AlarmType.objects.filter(alarm_type_id=alarm_type_id).first()
+
+        # 创建并保存新的警报对象
+        new_alarm = Alarm(user_id=User.objects.get(pk=user_id), alarm_type_id=alarm, alarm_available=True)
+        new_alarm.save()
+        return redirect('/')
+
+    alarm_types = AlarmType.objects.all()
+    return redirect('/')
+
+
+@require_POST
+@csrf_exempt
+def delete_user_alarm(request):
+    try:
+        data = json.loads(request.body)
+        alarm_id = data.get('alarm_id')
+        Alarm.objects.get(pk=alarm_id).delete()
+        return JsonResponse({'success': True})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+@require_POST
+@csrf_exempt
+def add_umbrella_alarm(request):
+    if request.method == 'POST':
+        umbrella_id = request.POST.get('umbrella_id')
+        alarm_type_id = request.POST.get('alarm_type')
+
+        alarm_type = AlarmType.objects.filter(alarm_type_id=alarm_type_id).first()
+
+        # 创建并保存新的警报对象
+        new_alarm = Alarm(umbrella_id=Umbrella.objects.get(pk=umbrella_id), alarm_type_id=alarm_type,
+                          alarm_available=True)
+        new_alarm.save()
+        return redirect('/')
+
+    alarm_types = AlarmType.objects.all()
+    return redirect('/')
+
+
+@require_POST
+@csrf_exempt
+def delete_umbrella_alarm(request):
+    try:
+        data = json.loads(request.body)
+        alarm_id = data.get('alarm_id')
+        Alarm.objects.get(pk=alarm_id).delete()
+        return JsonResponse({'success': True})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
 
 
 def ran(request):

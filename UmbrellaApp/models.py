@@ -144,9 +144,10 @@ class Recharge(models.Model):
 
 class Alarm(models.Model):
     alarm_id = models.AutoField(primary_key=True, verbose_name="警报ID")
-    umbrella_id = models.ForeignKey(Umbrella, on_delete=models.CASCADE)
-    user_id = models.ForeignKey(User, on_delete=models.CASCADE)
-    alarm_type_id = models.ForeignKey('AlarmType', on_delete=models.SET_NULL, null=True)
+    umbrella_id = models.ForeignKey(Umbrella, on_delete=models.CASCADE, null=True, blank=True)
+    user_id = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    site_id = models.ForeignKey(Site, on_delete=models.CASCADE, null=True, blank=True)
+    alarm_type_id = models.ForeignKey('AlarmType', on_delete=models.SET_NULL, null=True, blank=True)
     alarm_available = models.BooleanField(verbose_name="是否报警")
 
     class Meta:
@@ -162,15 +163,23 @@ class AlarmType(models.Model):
         verbose_name = "警报类型表"
         verbose_name_plural = verbose_name
 
+    def __str__(self):
+        return str(self.alarm_type_id) + '.' + self.alarm_type
+
 
 class Coupon(models.Model):
+    """
+    优惠券类型如果是1，则表示这个是满AAA减BBB。
+    如果是0，则表示满AAA打BBB折。AAA存在satisfied_amount，BBB存在discount_price里面。
+    """
     coupon_id = models.AutoField(primary_key=True, verbose_name="优惠券ID")
     user_id = models.ForeignKey(User, on_delete=models.CASCADE)
-    coupon_type = models.CharField(verbose_name="优惠券类型", max_length=50)
+    coupon_type = models.BooleanField(verbose_name="优惠券类型")
     discount_price = models.FloatField(verbose_name="折扣力度")
     satisfied_amount = models.FloatField(verbose_name="满足金额")
     effective_time = models.DateTimeField(verbose_name="生效时间")
     expire_time = models.DateTimeField(verbose_name="失效时间")
+    available = models.BooleanField(verbose_name='是否可用', default=True)
 
     class Meta:
         verbose_name = "优惠券表"
@@ -188,3 +197,34 @@ class Comment(models.Model):
     class Meta:
         verbose_name = "评论表"
         verbose_name_plural = verbose_name
+
+
+# 优惠券过期触发器
+"""
+CREATE TRIGGER UpdateCouponAvailability
+AFTER UPDATE OF expire_time ON Coupon
+BEGIN
+    UPDATE Coupon
+    SET available = (CASE WHEN datetime('now') > expire_time THEN 0 ELSE 1 END)
+    WHERE rowid = NEW.rowid;
+END;
+"""
+
+# 统计站点个数
+"""
+CREATE TRIGGER UpdateSiteStoreNumAfterInsert
+AFTER INSERT ON SiteStorage
+BEGIN
+    UPDATE Site
+    SET site_store_num = IFNULL(site_store_num, 0) + 1
+    WHERE site_id = NEW.site_id;
+END;
+
+CREATE TRIGGER UpdateSiteStoreNumAfterDelete
+AFTER DELETE ON SiteStorage
+BEGIN
+    UPDATE Site
+    SET site_store_num = IFNULL(site_store_num, 0) - 1
+    WHERE site_id = OLD.site_id;
+END;
+"""

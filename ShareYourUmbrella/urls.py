@@ -78,6 +78,24 @@ urlpatterns = [
     # 查询伞
     path("place_detail/<str:pk>/", views.place_detail),
 
+    # 账户充值
+    path("recharge_account/", views.recharge_account),
+
+    # 添加优惠券
+    path("add_coupon/", views.add_coupon),
+
+    # 添加站点警报
+    path("add_location_alarm/", views.add_location_alarm),
+
+    # 添加站点警报
+    path("delete_location_alarm/", views.delete_location_alarm),
+    path("delete_user_alarm/", views.delete_user_alarm),
+    path("delete_umbrella_alarm/", views.delete_umbrella_alarm),
+
+    # 添加用户警报
+    path("add_user_alarm/", views.add_user_alarm),
+    path("add_umbrella_alarm/", views.add_umbrella_alarm),
+
     # 后台管理界面
     path("ad/test/", views.test),
     path("ad/userinfo/", views.userinfo),

@@ -1,6 +1,8 @@
 {% extends 'block/main.html' %}
 {% block content %}
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 
     <style>
         #head_card {
@@ -98,6 +100,8 @@
                                         <th>上次登录日期</th>
                                         <th>账户余额</th>
                                         <th>伞号</th>
+                                        <th>优惠券</th>
+                                        <th>警报</th>
                                     </tr>
                                     {% csrf_token %}
                                     {% for item in UserInfo_list %}
@@ -118,7 +122,18 @@
                                             {% else %}
                                                 <td>未借</td>
                                             {% endif %}
-
+                                            <td>
+                                                <a class="btn btn-primary btn-sm" data-bs-toggle="modal"
+                                                   data-bs-target="#user_coupon{{ item.user_id }}">查看</a>
+                                                <a class="btn btn-primary btn-sm" data-bs-toggle="modal"
+                                                   data-bs-target="#add_user_coupon{{ item.user_id }}">添加</a>
+                                            </td>
+                                            <td>
+                                                <a class="btn btn-primary btn-sm btn-block" data-bs-toggle="modal"
+                                                   data-bs-target="#check_user_alarm{{ item.user_id }}">查看警报</a>
+                                                <a class="btn btn-primary btn-sm btn-block" data-bs-toggle="modal"
+                                                   data-bs-target="#add_user_alarm{{ item.user_id }}">添加警报</a>
+                                            </td>
                                         </tr>
                                     {% endfor %}
                                 </table>
@@ -162,6 +177,7 @@
                                     <th>入库日期</th>
                                     <th>上次使用</th>
                                     <th>放置位置</th>
+                                    <th>警报</th>
                                     <th>操作</th>
                                 </tr>
                                 {% for item in Umbrella_list_with_positions %}
@@ -174,6 +190,12 @@
                                         <td>{{ item.umbrella.umbrella_warehousing_date|date:"Y-m-d" }}</td>
                                         <td>{{ item.umbrella.umbrella_last_used_date|date:"Y-m-d" }}</td>
                                         <td>{{ item.position }}</td>
+                                        <td>
+                                            <a class="btn btn-primary btn-sm btn-block" data-bs-toggle="modal"
+                                               data-bs-target="#check_umbrella_alarm{{ item.umbrella.umbrella_id }}">查看警报</a>
+                                            <a class="btn btn-primary btn-sm btn-block" data-bs-toggle="modal"
+                                               data-bs-target="#add_umbrella_alarm{{ item.umbrella.umbrella_id }}">添加警报</a>
+                                        </td>
                                         <td>
                                             <a class="btn btn-primary btn-sm" data-bs-toggle="modal"
                                                data-bs-target="#umbrella_detail{{ item.umbrella.umbrella_id }}">详情</a>
@@ -257,6 +279,7 @@
                                     <th>编号</th>
                                     <th>区域名</th>
                                     <th>可用/总伞位</th>
+                                    <th>警报</th>
                                     <th>操作</th>
                                 </tr>
                                 {% for item in location_list %}
@@ -264,9 +287,15 @@
                                         <td>{{ item.site_id }}</td>
                                         <td>{{ item.site_address }}</td>
                                         <td>{{ item.num }}/{{ item.site_store_num }}</td>
+                                        <td>{{ item.alarms }}</td>
                                         <td>
                                             <a class="btn btn-primary btn-sm btn-block" data-bs-toggle="modal"
                                                data-bs-target="#place{{ item.site_id }}">详情</a>
+                                            <a class="btn btn-primary btn-sm btn-block" data-bs-toggle="modal"
+                                               data-bs-target="#check_location_alarm{{ item.site_id }}">查看警报</a>
+                                            <a class="btn btn-primary btn-sm btn-block" data-bs-toggle="modal"
+                                               data-bs-target="#add_location_alarm{{ item.site_id }}">添加警报</a>
+
                                         </td>
                                     </tr>
                                 {% endfor %}
@@ -868,7 +897,575 @@
         </div>
     {% endfor %}
 
+    {% for item in UserInfo_list %}
+        <!-- 用户优惠券模态框 -->
+        <div class="modal fade" id="user_coupon{{ item.user_id }}" tabindex="-1"
+             aria-labelledby="couponModalLabel{{ item.user_id }}" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="couponModalLabel{{ item.user_id }}">优惠券列表</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        {% if item.coupons|length > 0 %}
+                            <ul>
+                                {% for coupon in item.coupons %}
+                                    <li>
+                                        {% if coupon.coupon_type %}
+                                            类型: 满减券
+                                            <br>
+                                            <strong>
+                                                满{{ coupon.satisfied_amount }}元 减
+                                                {{ coupon.discount_price }}元
+                                            </strong>
+                                        {% else %}
+                                            类型: 打折券
+                                            <br>
+                                            <strong> 满{{ coupon.satisfied_amount }}元 打
+                                                {{ coupon.discount_price|floatformat:0 }} 折
+                                            </strong>
+                                        {% endif %}
+                                        <br>
+                                        有效期: {{ coupon.effective_time|date:'y-m-d' }}至{{ coupon.expire_time|date:'y-m-d' }}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p>此用户没有优惠券。</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
 
+
+    {% for item in UserInfo_list %}
+        <!-- 添加优惠券模态框 -->
+        <div class="modal fade" id="add_user_coupon{{ item.user_id }}" tabindex="-1"
+             aria-labelledby="addCouponModalLabel{{ item.user_id }}" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addCouponModalLabel{{ item.user_id }}">添加优惠券</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form method="post" action="/add_coupon/">
+                        {% csrf_token %}
+                        <div class="modal-body">
+                            <input type="hidden" name="user_id" value="{{ item.user_id }}">
+                            <div class="mb-3">
+                                <label for="coupon_type" class="form-label">优惠券类型</label>
+                                <select class="form-select" name="coupon_type">
+                                    <option value="1">满减</option>
+                                    <option value="0">打折</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="satisfied_amount" class="form-label">满足金额</label>
+                                <input type="number" class="form-control" name="satisfied_amount">
+                            </div>
+                            <div class="mb-3">
+                                <label for="discount_price" class="form-label">折扣力度</label>
+                                <input type="number" class="form-control" name="discount_price">
+                            </div>
+                            <div class="mb-3">
+                                <label for="effective_time{{ item.user_id }}" class="form-label">生效时间</label>
+                                <input type="datetime-local" class="form-control" name="effective_time"
+                                       id="effective_time{{ item.user_id }}">
+                                <button type="button" class="btn btn-outline-secondary btn-sm mt-1"
+                                        onclick="setCurrentTime('{{ item.user_id }}')">现在
+                                </button>
+                            </div>
+                            <div class="mb-3">
+                                <label for="expire_time{{ item.user_id }}" class="form-label">失效时间</label>
+                                <input type="datetime-local" class="form-control" name="expire_time"
+                                       id="expire_time{{ item.user_id }}">
+                                <div class="btn-group mt-1" role="group" aria-label="Quick set expire time">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm"
+                                            onclick="setExpireTime('{{ item.user_id }}', 1)">1天
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm"
+                                            onclick="setExpireTime('{{ item.user_id }}', 7)">7天
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm"
+                                            onclick="setExpireTime('{{ item.user_id }}', 10)">10天
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm"
+                                            onclick="setExpireTime('{{ item.user_id }}', 30)">一个月
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm"
+                                            onclick="setExpireTime('{{ item.user_id }}', 90)">三个月
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm"
+                                            onclick="setExpireTime('{{ item.user_id }}', 180)">半年
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm"
+                                            onclick="setExpireTime('{{ item.user_id }}', 365)">一年
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm"
+                                            onclick="setExpireTime('{{ item.user_id }}', '永久')">永久
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                            <button type="submit" class="btn btn-primary">添加</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+
+    <!-- 模态框 -->
+    {% for item in location_list %}
+        <div class="modal fade" id="check_location_alarm{{ item.site_id }}" tabindex="-1" aria-labelledby="modalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalLabel">站点{{ item.site_id }}的警报</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        {% for alarm in item.alarm_details %}
+                            <div class="alarm-item">
+                                <p>警报类型: {{ alarm.alarm_type_id.alarm_type }}
+                                    <!-- 删除警报的按钮 -->
+                                    <button class="btn btn-danger btn-sm"
+                                            onclick="deleteLocationAlarm({{ alarm.alarm_id }})">
+                                        删除警报
+                                    </button>
+                                </p>
+                            </div>
+                        {% empty %}
+                            <p>没有活动警报。</p>
+                        {% endfor %}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+
+    <!-- 模态框 -->
+    {% for item in location_list %}
+        <div class="modal fade" id="add_location_alarm{{ item.site_id }}" tabindex="-1" aria-labelledby="modalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalLabel">站点{{ item.site_id }} - 添加警报</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- 添加警报的表单 -->
+                        <form method="post" action="/add_location_alarm/">
+                            {% csrf_token %}
+                            <input type="hidden" name="site_id" value="{{ item.site_id }}">
+                            <!-- 警报类型选择 -->
+                            <div class="mb-3">
+                                <label for="alarm_type" class="form-label">警报类型</label>
+                                <select class="form-select" id="alarm_type" name="alarm_type">
+                                    {% for alarm_type in alarm_types %}
+                                        <option value="{{ alarm_type.alarm_type_id }}">{{ alarm_type.alarm_type_id }}. {{ alarm_type.alarm_type }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <!-- 其他表单字段 -->
+                            <button type="submit" class="btn btn-primary">添加警报</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+
+    {% for item in UserInfo_list %}
+        <!-- 查看警报的模态框 -->
+        <div class="modal fade" id="check_user_alarm{{ item.user_id }}" tabindex="-1" aria-labelledby="modalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalLabel">用户{{ item.user_id }}的警报</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- 在这里插入警报信息 -->
+                        {% for alarm in item.alarm_details %}
+                            <p>警报类型: {{ alarm.alarm_type_id }}
+                                <!-- 删除警报的按钮 -->
+                                <button class="btn btn-danger btn-sm" onclick="deleteUserAlarm({{ alarm.alarm_id }})">
+                                    删除警报
+                                </button>
+                            </p>
+                        {% empty %}
+                            <p>没有警报。</p>
+                        {% endfor %}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+
+
+    {% for item in UserInfo_list %}
+        <!-- 添加警报的模态框 -->
+        <div class="modal fade" id="add_user_alarm{{ item.user_id }}" tabindex="-1" aria-labelledby="modalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalLabel">为用户{{ item.user_id }}添加警报</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form method="post" action="/add_user_alarm/">
+                            {% csrf_token %}
+                            <input type="hidden" name="user_id" value="{{ item.user_id }}">
+                            <div class="mb-3">
+                                <label for="alarm_type" class="form-label">警报类型</label>
+                                <select class="form-select" id="alarm_type" name="alarm_type">
+                                    {% for alarm_type in alarm_types %}
+                                        <option value="{{ alarm_type.alarm_type_id }}">{{ alarm_type.alarm_type }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary">添加警报</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+
+    {% for item in Umbrella_list_with_positions %}
+        <!-- 查看警报的模态框 -->
+        <div class="modal fade" id="check_umbrella_alarm{{ item.umbrella.umbrella_id }}" tabindex="-1"
+             aria-labelledby="modalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalLabel">雨伞{{ item.umbrella.umbrella_id }}的警报</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- 在这里插入警报信息 -->
+                        {% for alarm in item.umbrella.umbrella_alarm_details %}
+                            <p>
+                                警报类型: {{ alarm.alarm_type_id }}
+                                <button class="btn btn-danger btn-sm"
+                                        onclick="deleteUserAlarm({{ alarm.alarm_id }})">
+                                    删除警报
+                                </button>
+                            </p>
+                        {% empty %}
+                            <p>没有警报。</p>
+                        {% endfor %}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+
+    {% for item in Umbrella_list_with_positions %}
+        <!-- 添加警报的模态框 -->
+        <div class="modal fade" id="add_umbrella_alarm{{ item.umbrella.umbrella_id }}" tabindex="-1"
+             aria-labelledby="modalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalLabel">为雨伞{{ item.umbrella.umbrella_id }}添加警报</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form method="post" action="/add_umbrella_alarm/">
+                            {% csrf_token %}
+                            <input type="hidden" name="umbrella_id" value="{{ item.umbrella.umbrella_id }}">
+                            <div class="mb-3">
+                                <label for="alarm_type" class="form-label">警报类型</label>
+                                <select class="form-select" id="alarm_type" name="alarm_type">
+                                    {% for alarm_type in alarm_types %}
+                                        <option value="{{ alarm_type.alarm_type_id }}">{{ alarm_type.alarm_type_id }}. {{ alarm_type.alarm_type }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary">添加警报</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+
+
+
+    <!-- 外层容器 -->
+    <div class="container">
+        <!-- 卡片行 -->
+        <div class="row">
+            <!-- 伞类型统计图卡片 -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">伞类型统计图</h5>
+                        <canvas id="umbrellaChart" width="50" height="50"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">站点雨伞数量统计</h5>
+                        <canvas id="siteUmbrellaChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <br>
+        <div class="row">
+            <!-- 用户租借历史 -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">用户租借历史</h5>
+                        <canvas id="userRentalHistoryChart" width="80" height="40"></canvas>
+                    </div>
+                </div>
+                <br>
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">每月注册数量</h5>
+                        <canvas id="monthlyRegistrationsChart" width="800" height="400"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">用户账户余额统计</h5>
+                        <canvas id="userBalanceChart" width="300" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function deleteUserAlarm(alarmId) {
+            if (confirm("确定要删除这个警报吗？")) {
+                fetch("/delete_umbrella_alarm/", {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({'alarm_id': alarmId})
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // 移除警报信息或者重新加载页面
+                            location.reload();
+                        } else {
+                            alert("删除失败");
+                        }
+                    });
+            }
+        }
+    </script>
+
+
+    <script>
+        function deleteLocationAlarm(alarmId) {
+            if (confirm("确定要删除这个警报吗？")) {
+                fetch("/delete_location_alarm/", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({alarm_id: alarmId})
+                }).then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload(); // 重新加载页面以更新警报列表
+                        }
+                    });
+            }
+        }
+    </script>
+
+    <script>
+        function deleteUserAlarm(alarmId) {
+            if (confirm("确定要删除这个警报吗？")) {
+                fetch("/delete_user_alarm/", {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({'alarm_id': alarmId})
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload(); // 成功后重新加载页面
+                        } else {
+                            alert("删除失败");
+                        }
+                    });
+            }
+        }
+    </script>
+
+
+
+    <script>
+        var ctx = document.getElementById('umbrellaChart').getContext('2d');
+        var umbrellaChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: {{ umbrella_types | safe }},
+                datasets: [{
+                    label: '伞的数量',
+                    data: {{ umbrella_counts | safe }},
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.2)',
+                        'rgba(54, 162, 235, 0.2)',
+                        'rgba(255, 206, 86, 0.2)',
+                        // ...其他颜色
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        // ...其他颜色
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                // 配置项
+            }
+        });
+    </script>
+
+    <script>
+        {#// 设置 canvas 父元素的大小#}
+        {#var canvasParent = document.getElementById('userBalanceChart').parentNode;#}
+        {##}
+        {#canvasParent.style.width = '1000px';   // 宽度#}
+        {#canvasParent.style.height = '600px';  // 高度#}
+
+        var ctx = document.getElementById('userBalanceChart').getContext('2d');
+        var userBalanceChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: {{ user_names | safe }},
+                datasets: [{
+                    label: '用户余额',
+                    data: {{ user_balances | safe }},
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    </script>
+
+    <script>
+        var ctx = document.getElementById('siteUmbrellaChart').getContext('2d');
+        var siteUmbrellaChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: {{ site_ids | safe }},
+                datasets: [{
+                    label: '伞数量',
+                    data: {{ umbrella_counts_11 | safe }},
+                    backgroundColor: 'rgba(153, 102, 255, 0.2)',
+                    borderColor: 'rgba(153, 102, 255, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    </script>
+
+    <script>
+        var ctx = document.getElementById('userRentalHistoryChart').getContext('2d');
+        var userRentalHistoryChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: {{ dates | safe }},
+                datasets: [{
+                    label: '出租数量',
+                    data: {{ counts | safe }},
+                    backgroundColor: 'rgba(255, 159, 64, 0.2)',
+                    borderColor: 'rgba(255, 159, 64, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    </script>
+
+    <script>
+        var ctx = document.getElementById('monthlyRegistrationsChart').getContext('2d');
+        var monthlyRegistrationsChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: {{ months | safe }},
+                datasets: [{
+                    label: '每月注册数量',
+                    data: {{ counts | safe }},
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    </script>
 
     <script>
         function toggleDispatchDetails(umbrellaId) {
@@ -941,6 +1538,30 @@
                 });
             });
         });
+    </script>
+
+    <script>
+        // 优惠券生效失效时间设置
+        function setCurrentTime(userId) {
+            var now = new Date();
+            var dateTimeLocal = now.toISOString().slice(0, 16); // 转换为 datetime-local 输入需要的格式
+            document.getElementById('effective_time' + userId).value = dateTimeLocal;
+        }
+
+        function setExpireTime(userId, days) {
+            var expireInput = document.getElementById('expire_time' + userId);
+            var now = new Date();
+
+            if (days === '永久') {
+                now.setFullYear(now.getFullYear() + 100); // 设置为当前日期加上100年
+            } else {
+                now.setDate(now.getDate() + days); // 添加指定的天数
+            }
+
+            var dateTimeLocal = now.toISOString().slice(0, 16); // 转换为 datetime-local 输入需要的格式
+            expireInput.value = dateTimeLocal;
+        }
+
     </script>
 
 

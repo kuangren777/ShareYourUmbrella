@@ -25,6 +25,9 @@
                     <a class="btn btn-outline-info  btn-sm btn-block" data-bs-toggle="modal"
                        data-bs-target="#change_password">修改密码</a>
                     <br>
+                    <a class="btn btn-outline-info btn-sm btn-block" data-bs-toggle="modal"
+                       data-bs-target="#account_recharge">账户充值</a>
+                    <br>
                     <a class=" btn btn-outline-danger btn-sm btn-block" data-bs-toggle="modal"
                        data-bs-target="#confirm_delete">删除此用户</a>
 
@@ -311,6 +314,7 @@
                                     </div>
                                     {% endfor %}
                                     <input type="submit" class="btn btn-primary" value="提交">
+
                                 </form>
                             </div>
                         </div>
@@ -318,6 +322,54 @@
                 </div>
             </div>
         </div>
+
+
+        <!-- 账户充值模态框 -->
+        <div class="modal fade" id="account_recharge" tabindex="-1" aria-labelledby="rechargeModalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="rechargeModalLabel">账户充值</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form method="post" action="/recharge_account/" onsubmit="return validateRecharge();">
+                        {% csrf_token %}
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="recharge-amount" class="col-form-label">充值金额：</label>
+                                <input type="number" class="form-control" name="recharge_amount" id="recharge-amount"
+                                       step="0.01" min="0.00">
+                            </div>
+                            <div class="mb-3" id="recharge-amount">
+                                <label for="coupon-select" class="form-label">选择优惠券</label>
+                                <select class="form-select" id="coupon-select" name="coupon_id">
+                                    <option value="">不使用优惠券</option>
+                                    {% for coupon in coupons %}
+                                        <option value="{{ coupon.coupon_id }}">
+                                            {% if coupon.coupon_type %}
+                                                满{{ coupon.satisfied_amount }}减{{ coupon.discount_price }}
+                                            {% else %}
+                                                满{{ coupon.satisfied_amount }}打{{ coupon.discount_price }}折
+                                            {% endif %}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div>
+                                <strong>实际支付金额：</strong>
+                                <strong id="actual-amount">0.00</strong>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                            <button type="submit" class="btn btn-primary">充值</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
 
         <div class="modal fade" id="confirm_delete" tabindex="-1" aria-labelledby="exampleModalLabel"
              aria-hidden="true">
@@ -409,6 +461,47 @@
             selectElement.appendChild(defaultOption);
         }
     </script>
+
+    <!-- JavaScript 代码 -->
+    <script>
+        const coupons = {{ coupons_json|safe }};
+        document.getElementById('coupon-select').addEventListener('change', calculateDiscount);
+        document.getElementById('recharge-amount').addEventListener('input', calculateDiscount);
+
+        function calculateDiscount() {
+            const selectedCouponId = document.getElementById('coupon-select').value;
+            const rechargeAmount = parseFloat(document.getElementById('recharge-amount').value) || 0;
+            let actualAmount = rechargeAmount;
+
+            const selectedCoupon = coupons.find(coupon => coupon.coupon_id == selectedCouponId);
+            if (selectedCoupon) {
+                if (rechargeAmount >= selectedCoupon.satisfied_amount) {
+                    if (selectedCoupon.coupon_type) { // 满减
+                        actualAmount -= selectedCoupon.discount_price;
+                    } else { // 打折
+                        actualAmount *= (selectedCoupon.discount_price / 10);
+                    }
+                }
+            }
+
+            document.getElementById('actual-amount').textContent = actualAmount.toFixed(2);
+        }
+
+        function validateRecharge() {
+            const rechargeAmount = parseFloat(document.getElementById('recharge-amount').value) || 0;
+            const selectedCouponId = document.getElementById('coupon-select').value;
+            const selectedCoupon = coupons.find(coupon => coupon.coupon_id == selectedCouponId);
+
+            if (selectedCoupon && rechargeAmount < selectedCoupon.satisfied_amount) {
+                alert(`充值金额必须大于等于${selectedCoupon.satisfied_amount}元才能使用该优惠券。`);
+                return false;
+            }
+
+            return true;
+        }
+    </script>
+
+
 
 
 {% endblock %}
